@@ -7,55 +7,65 @@ var GameRemote = function(app) {
 	this.channelService = app.get('channelService');
 };
 
-var logger = require('pomelo-logger').getLogger('pomelo', __filename);
-// 例子   logger.info('client %j heartbeat timeout.', socket.id);
+var logger = require('pomelo-logger').getLogger(__filename);
 
-/**
- * user join into chat game channel.
- *
- * @param {String} uid unique id for user
- * @param {String} sid server id
- * @param {boolean} flag channel parameter
- *
- */
-GameRemote.prototype.joingamechannel=function(uid, gameid,cb)
+var pomelo = require('pomelo');
+var async=require('async');
+var db=pomelo.app.get('db');
+
+
+var defaultDataManager=require('../../../defaultdata/defaultDataManager');
+
+
+var gamelib=require('../../../gamelib/game');
+var maplib=require('../../../gamelib/map');
+var skilllib=require('../../../gamelib/skill');
+var rolelib=require('../../../gamelib/role');
+
+
+var userChannelDic={};
+
+const DoAction="DoAction";
+const PlayerFail="PlayerFail";
+
+//游戏数据判输，离开频道
+GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_sid,uid,callback)
 {
+	var result;
 
-	
-
-	cb();
-	
+	var funcs=[];
+	funcs.push((cb)=>{
+		this.app.rpc.gamedata.gamedataRemote.FailGame(gamedata_sid,creator_id,uid,(result_t)=>{
+			result=result_t;
+			cb();
+		});
+	});
+	funcs.push((cb)=>{
+		//游戏尚未结束
+		if(result==undefined)
+		{
+			this.app.rpc.gamechannel.gamechannelRemote.LeaveGameChannel(gamechannel_sid,uid,()=>{
+				cb();
+			});
+		}
+		//游戏结束
+		else
+		{
+			this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,()=>{
+				cb();
+			});
+		}
+		
+	});
+	async.waterfall(funcs,(err,result)=>{
+		callback(err);
+	})
 }
 
-/**
- * get user from chat game channel.
- *
- * @param {Object} opts parameters for request
- * @param {String} gameid gameid as channel name
- * @param {boolean} flag channel parameter
- * @return {Array} users uids in channel
- *
- */
-GameRemote.prototype.get = function(gameid, flag) {
-	var users = [];
-	var channel = this.channelService.getChannel(gameid, flag);
-	if( !! channel) {
-		users = channel.getMembers();
-	}
-	for(var i = 0; i < users.length; i++) {
-		users[i] = users[i].split('*')[0];
-	}
-	return users;
-};
 
-/**
- * Kick user out chat game channel.
- *
- * @param {String} uid unique id for user
- * @param {String} sid server id
- *
- */
-GameRemote.prototype.leavegamechannel = function(uid, gameid,cb) {
-	
-	cb();
-};
+
+
+
+
+
+

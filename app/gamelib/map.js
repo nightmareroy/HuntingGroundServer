@@ -1,5 +1,6 @@
-var skilllib=require('./skill');
-var maplib=require('./map');
+// var skilllib=require('./skill');
+var rolelib=require('./role');
+
 var defaultDataManager=require('../defaultdata/defaultDataManager');
 
 
@@ -135,6 +136,12 @@ var getneibourids=function(width,height,id)
 		}
 	}
 	return neibourids;
+}
+
+exports.get_neibour_ids=function(gameinfo,pos_id)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	return getneibourids(gametype.width,gametype.height,pos_id);
 }
 
 var genshadowborderids=function(centerid,width,height,targetid,radius,includefirst)
@@ -472,14 +479,27 @@ exports.checkpath=function(path,width,height)
 // 	}
 // }
 
-exports.getsightzoon=function(centerid,have_farsight_skill,have_detective_skill,game_total_map,width,height)
+exports.getsightzoon_of_role=function(role_id,gameinfo)
 {
-	var landform_map=game_total_map.landform_map;
-	var resource_map=game_total_map.resource_map;
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+
+
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
+
+	var width=gametype.width;
+	var height=gametype.height;
+
 	var result=[];
+	var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
+	// var role=gameinfo.roles[role_id];
+
+	var centerid=role_all_property.pos_id;
+	
+	
 	var sightdistence=1;
 	//拥有远眺技能，视野增加一格
-	if(have_farsight_skill)
+	if(role_all_property.far_sight>0)
 	{
 		sightdistence++;
 	}
@@ -488,6 +508,804 @@ exports.getsightzoon=function(centerid,have_farsight_skill,have_detective_skill,
 	{
 		sightdistence++;
 	}
+
+	var have_detective_skill=role_all_property.see_through>0;
+
+	var center=getxy(width,centerid);
+	var sightSystem=sightSys[center.x&1];
+
+	result.push(centerid);
+
+	// console.log(sightdistence)
+
+	//一环
+	if(sightdistence>=1)
+	{
+		for(var i=0;i<sightSystem['1'].length;i++)
+		{
+			var x=center.x+sightSystem['1'][i][0];
+			var y=center.y+sightSystem['1'][i][1];
+			
+			if(x<0||x>=width||y<0||y>=height)
+			{
+				continue;
+			}
+			var id=getid(width,x,y);
+			
+			// if(((landform_map[centerid]==2||landform_map[centerid]==4)&&(landform_map[id]==1||landform_map[id]==2))
+			// ||((landform_map[centerid]==1||landform_map[centerid]==3)&&(landform_map[id]==1)))
+			result.push(id);
+		}
+	}
+	
+	//二环
+	if(sightdistence>=2)
+	{
+
+		for(var i=0;i<sightSystem['2'].length;i++)
+		{
+			var x=center.x+sightSystem['2'][i][0];
+			var y=center.y+sightSystem['2'][i][1];
+			if(x<0||x>=width||y<0||y>=height)
+			{
+				continue;
+			}
+			var id=getid(width,x,y);
+
+			if(i==0||i==2||i==4||i==6||i==8||i==10)
+			{
+				var road;
+				var tempx;
+				var tempy;
+				switch(i)
+				{
+					case 0:
+						tempx=center.x+sightSystem['1'][0][0];
+						tempy=center.y+sightSystem['1'][0][1];
+						break;
+					case 2:
+						tempx=center.x+sightSystem['1'][1][0];
+						tempy=center.y+sightSystem['1'][1][1];
+						break;
+					case 4:
+						tempx=center.x+sightSystem['1'][2][0];
+						tempy=center.y+sightSystem['1'][2][1];
+						break;
+					case 6:
+						tempx=center.x+sightSystem['1'][3][0];
+						tempy=center.y+sightSystem['1'][3][1];
+						break;
+					case 8:
+						tempx=center.x+sightSystem['1'][4][0];
+						tempy=center.y+sightSystem['1'][4][1];
+						break;
+					case 10:
+						tempx=center.x+sightSystem['1'][5][0];
+						tempy=center.y+sightSystem['1'][5][1];
+						break;
+				}
+				if(tempx>=0&&tempx<width&&tempy>=0&&tempy<height)
+				{
+					if(landform_map[getid(width,tempx,tempy)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(resource_map[getid(width,tempx,tempy)]!=2)
+							{
+								road=true;
+							}
+							else
+							{
+								road=have_detective_skill;
+							}
+							
+						}
+						else
+						{
+							road=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx,tempy)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(resource_map[getid(width,tempx,tempy)]==2)
+							{
+								road=have_detective_skill;
+							}
+							else
+							{
+								road=true;
+							}
+						}
+						else
+						{
+							road=true;
+						}
+					}
+					
+				}
+				else
+				{
+					road=false;
+				}
+
+				if(road)
+				{
+					result.push(id);
+				}
+			}
+			else if(i==1||i==3||i==5||i==7||i==9||i==11)
+			{
+				var road1;
+				var tempx1;
+				var tempy1;
+				var road2;
+				var tempx2;
+				var tempy2;
+
+				switch(i)
+				{
+					case 1:
+						tempx1=center.x+sightSystem['1'][0][0];
+						tempy1=center.y+sightSystem['1'][0][1];
+						tempx2=center.x+sightSystem['1'][1][0];
+						tempy2=center.y+sightSystem['1'][1][1];
+						break;
+					case 3:
+						tempx1=center.x+sightSystem['1'][1][0];
+						tempy1=center.y+sightSystem['1'][1][1];
+						tempx2=center.x+sightSystem['1'][2][0];
+						tempy2=center.y+sightSystem['1'][2][1];
+						break;
+					case 5:
+						tempx1=center.x+sightSystem['1'][2][0];
+						tempy1=center.y+sightSystem['1'][2][1];
+						tempx2=center.x+sightSystem['1'][3][0];
+						tempy2=center.y+sightSystem['1'][3][1];
+						break;
+					case 7:
+						tempx1=center.x+sightSystem['1'][3][0];
+						tempy1=center.y+sightSystem['1'][3][1];
+						tempx2=center.x+sightSystem['1'][4][0];
+						tempy2=center.y+sightSystem['1'][4][1];
+						break;
+					case 9:
+						tempx1=center.x+sightSystem['1'][4][0];
+						tempy1=center.y+sightSystem['1'][4][1];
+						tempx2=center.x+sightSystem['1'][5][0];
+						tempy2=center.y+sightSystem['1'][5][1];
+						break;
+					case 11:
+						tempx1=center.x+sightSystem['1'][5][0];
+						tempy1=center.y+sightSystem['1'][5][1];
+						tempx2=center.x+sightSystem['1'][0][0];
+						tempy2=center.y+sightSystem['1'][0][1];
+						break;
+				}
+
+				if(tempx1>=0&&tempx1<width&&tempy1>=0&&tempy1<height)
+				{
+					if(landform_map[getid(width,tempx1,tempy1)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(resource_map[getid(width,tempx1,tempy1)]!=2)
+							{
+								road1=true;
+							}
+							else
+							{
+								road1=have_detective_skill;
+							}
+							
+						}
+						else
+						{
+							road1=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx1,tempy1)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(resource_map[getid(width,tempx1,tempy1)]==2)
+							{
+								road1=have_detective_skill;
+							}
+							else
+							{
+								road1=true;
+							}
+						}
+						else
+						{
+							road1=true;
+						}
+					}
+					
+				}
+				else
+				{
+					road1=false;
+				}
+
+				if(tempx2>=0&&tempx2<width&&tempy2>=0&&tempy2<height)
+				{
+					if(landform_map[getid(width,tempx2,tempy2)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(resource_map[getid(width,tempx2,tempy2)]!=2)
+							{
+								road2=true;
+							}
+							else
+							{
+								road2=have_detective_skill;
+							}
+							
+						}
+						else
+						{
+							road2=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx2,tempy2)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(resource_map[getid(width,tempx2,tempy2)]==2)
+							{
+								road2=have_detective_skill;
+							}
+							else
+							{
+								road2=true;
+							}
+						}
+						else
+						{
+							road2=true;
+						}
+					}
+					
+				}
+				else
+				{
+					road2=false;
+				}
+
+
+				if(road1||road2)
+				{
+					result.push(id);
+				}
+
+			}
+		}
+	}
+	//三环
+	if(sightdistence>=3)
+	{
+		for(var i=0;i<sightSystem['3'].length;i++)
+		{
+			var x=center.x+sightSystem['3'][i][0];
+			var y=center.y+sightSystem['3'][i][1];
+			if(x<0||x>=width||y<0||y>=height)
+			{
+				continue;
+			}
+			var id=getid(width,x,y);
+
+
+			if(i==0||i==3||i==6||i==9||i==12||i==15)
+			{
+				var road;
+				var tempx11;
+				var tempy11;
+				var tempx21;
+				var tempy21;
+
+				switch(i)
+				{
+					case 0:
+						tempx11=center.x+sightSystem['1'][0][0];
+						tempy11=center.y+sightSystem['1'][0][1];
+						tempx21=center.x+sightSystem['2'][0][0];
+						tempy21=center.y+sightSystem['2'][0][1];
+					case 3:
+						tempx11=center.x+sightSystem['1'][1][0];
+						tempy11=center.y+sightSystem['1'][1][1];
+						tempx21=center.x+sightSystem['2'][2][0];
+						tempy21=center.y+sightSystem['2'][2][1];
+					case 6:
+						tempx11=center.x+sightSystem['1'][2][0];
+						tempy11=center.y+sightSystem['1'][2][1];
+						tempx21=center.x+sightSystem['2'][4][0];
+						tempy21=center.y+sightSystem['2'][4][1];
+					case 9:
+						tempx11=center.x+sightSystem['1'][3][0];
+						tempy11=center.y+sightSystem['1'][3][1];
+						tempx21=center.x+sightSystem['2'][6][0];
+						tempy21=center.y+sightSystem['2'][6][1];
+					case 12:
+						tempx11=center.x+sightSystem['1'][4][0];
+						tempy11=center.y+sightSystem['1'][4][1];
+						tempx21=center.x+sightSystem['2'][8][0];
+						tempy21=center.y+sightSystem['2'][8][1];
+					case 15:
+						tempx11=center.x+sightSystem['1'][5][0];
+						tempy11=center.y+sightSystem['1'][5][1];
+						tempx21=center.x+sightSystem['2'][10][0];
+						tempy21=center.y+sightSystem['2'][10][1];
+				}
+
+				if(tempx11>=0&&tempx11<width&&tempy11>=0&&tempy11<height&&tempx21>=0&&tempx21<width&&tempy21>=0&&tempy21<height)
+				{
+					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx21,tempy21)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(have_detective_skill==false)
+							{
+								road=true;
+								if(landform_map[getid(width,tempx11,tempy11)]==2)
+								{
+									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									{
+										road=false;
+									}
+								}
+								if(landform_map[getid(width,tempx21,tempy21)]==2)
+								{
+									if(resource_map[getid(width,tempx21,tempy21)]==2)
+									{
+										road=false;
+									}
+								}
+							}
+							else
+							{
+								road=true;
+							}
+						}
+						
+						else
+						{
+							road=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==1&&landform_map[getid(width,tempx21,tempy21)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(have_detective_skill==false)
+							{
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx21,tempy21)]==2)
+								{
+									road=false;
+								}
+								else
+								{
+									road=true;
+								}
+							}
+							else
+							{
+								road=true;
+							}
+						}
+						
+						else
+						{
+							road=true;
+						}
+						
+					}
+					
+				}
+				else
+				{
+					road=false;
+				}
+
+				if(road)
+				{
+					result.push(id);
+				}
+
+
+			}
+
+			else
+			{
+				var road1;
+				var road2;
+				var road3;
+				var tempx11;
+				var tempy11;
+				var tempx21;
+				var tempy21;
+				var tempx12;
+				var tempy12;
+				var tempx22;
+				var tempy22;
+
+				switch(i)
+				{
+					case 1:
+						tempx11=center.x+sightSystem['1'][0][0];
+						tempy11=center.y+sightSystem['1'][0][1];
+						tempx21=center.x+sightSystem['2'][0][0];
+						tempy21=center.y+sightSystem['2'][0][1];
+						tempx12=center.x+sightSystem['1'][1][0];
+						tempy12=center.y+sightSystem['1'][1][1];
+						tempx22=center.x+sightSystem['2'][1][0];
+						tempy22=center.y+sightSystem['2'][1][1];
+					case 2:
+						tempx11=center.x+sightSystem['1'][0][0];
+						tempy11=center.y+sightSystem['1'][0][1];
+						tempx21=center.x+sightSystem['2'][1][0];
+						tempy21=center.y+sightSystem['2'][1][1];
+						tempx12=center.x+sightSystem['1'][1][0];
+						tempy12=center.y+sightSystem['1'][1][1];
+						tempx22=center.x+sightSystem['2'][2][0];
+						tempy22=center.y+sightSystem['2'][2][1];
+					case 4:
+						tempx11=center.x+sightSystem['1'][1][0];
+						tempy11=center.y+sightSystem['1'][1][1];
+						tempx21=center.x+sightSystem['2'][2][0];
+						tempy21=center.y+sightSystem['2'][2][1];
+						tempx12=center.x+sightSystem['1'][2][0];
+						tempy12=center.y+sightSystem['1'][2][1];
+						tempx22=center.x+sightSystem['2'][3][0];
+						tempy22=center.y+sightSystem['2'][3][1];
+					case 5:
+						tempx11=center.x+sightSystem['1'][1][0];
+						tempy11=center.y+sightSystem['1'][1][1];
+						tempx21=center.x+sightSystem['2'][3][0];
+						tempy21=center.y+sightSystem['2'][3][1];
+						tempx12=center.x+sightSystem['1'][2][0];
+						tempy12=center.y+sightSystem['1'][2][1];
+						tempx22=center.x+sightSystem['2'][4][0];
+						tempy22=center.y+sightSystem['2'][4][1];
+					case 7:
+						tempx11=center.x+sightSystem['1'][2][0];
+						tempy11=center.y+sightSystem['1'][2][1];
+						tempx21=center.x+sightSystem['2'][4][0];
+						tempy21=center.y+sightSystem['2'][4][1];
+						tempx12=center.x+sightSystem['1'][3][0];
+						tempy12=center.y+sightSystem['1'][3][1];
+						tempx22=center.x+sightSystem['2'][5][0];
+						tempy22=center.y+sightSystem['2'][5][1];
+					case 8:
+						tempx11=center.x+sightSystem['1'][2][0];
+						tempy11=center.y+sightSystem['1'][2][1];
+						tempx21=center.x+sightSystem['2'][5][0];
+						tempy21=center.y+sightSystem['2'][5][1];
+						tempx12=center.x+sightSystem['1'][3][0];
+						tempy12=center.y+sightSystem['1'][3][1];
+						tempx22=center.x+sightSystem['2'][6][0];
+						tempy22=center.y+sightSystem['2'][6][1];
+					case 10:
+						tempx11=center.x+sightSystem['1'][3][0];
+						tempy11=center.y+sightSystem['1'][3][1];
+						tempx21=center.x+sightSystem['2'][6][0];
+						tempy21=center.y+sightSystem['2'][6][1];
+						tempx12=center.x+sightSystem['1'][4][0];
+						tempy12=center.y+sightSystem['1'][4][1];
+						tempx22=center.x+sightSystem['2'][7][0];
+						tempy22=center.y+sightSystem['2'][7][1];
+					case 11:
+						tempx11=center.x+sightSystem['1'][3][0];
+						tempy11=center.y+sightSystem['1'][3][1];
+						tempx21=center.x+sightSystem['2'][7][0];
+						tempy21=center.y+sightSystem['2'][7][1];
+						tempx12=center.x+sightSystem['1'][4][0];
+						tempy12=center.y+sightSystem['1'][4][1];
+						tempx22=center.x+sightSystem['2'][8][0];
+						tempy22=center.y+sightSystem['2'][8][1];
+					case 13:
+						tempx11=center.x+sightSystem['1'][4][0];
+						tempy11=center.y+sightSystem['1'][4][1];
+						tempx21=center.x+sightSystem['2'][8][0];
+						tempy21=center.y+sightSystem['2'][8][1];
+						tempx12=center.x+sightSystem['1'][5][0];
+						tempy12=center.y+sightSystem['1'][5][1];
+						tempx22=center.x+sightSystem['2'][9][0];
+						tempy22=center.y+sightSystem['2'][9][1];
+					case 14:
+						tempx11=center.x+sightSystem['1'][4][0];
+						tempy11=center.y+sightSystem['1'][4][1];
+						tempx21=center.x+sightSystem['2'][9][0];
+						tempy21=center.y+sightSystem['2'][9][1];
+						tempx12=center.x+sightSystem['1'][5][0];
+						tempy12=center.y+sightSystem['1'][5][1];
+						tempx22=center.x+sightSystem['2'][10][0];
+						tempy22=center.y+sightSystem['2'][10][1];
+					case 16:
+						tempx11=center.x+sightSystem['1'][5][0];
+						tempy11=center.y+sightSystem['1'][5][1];
+						tempx21=center.x+sightSystem['2'][10][0];
+						tempy21=center.y+sightSystem['2'][10][1];
+						tempx12=center.x+sightSystem['1'][0][0];
+						tempy12=center.y+sightSystem['1'][0][1];
+						tempx22=center.x+sightSystem['2'][11][0];
+						tempy22=center.y+sightSystem['2'][11][1];
+					case 17:
+						tempx11=center.x+sightSystem['1'][5][0];
+						tempy11=center.y+sightSystem['1'][5][1];
+						tempx21=center.x+sightSystem['2'][11][0];
+						tempy21=center.y+sightSystem['2'][11][1];
+						tempx12=center.x+sightSystem['1'][0][0];
+						tempy12=center.y+sightSystem['1'][0][1];
+						tempx22=center.x+sightSystem['2'][0][0];
+						tempy22=center.y+sightSystem['2'][0][1];
+				}
+
+				//road1
+				if(tempx11>=0&&tempx11<width&&tempy11>=0&&tempy11<height&&tempx21>=0&&tempx21<width&&tempy21>=0&&tempy21<height)
+				{
+					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx21,tempy21)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(have_detective_skill==false)
+							{
+								road1=true;
+								if(landform_map[getid(width,tempx11,tempy11)]==2)
+								{
+									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									{
+										road1=false;
+									}
+								}
+								if(landform_map[getid(width,tempx21,tempy21)]==2)
+								{
+									if(resource_map[getid(width,tempx21,tempy21)]==2)
+									{
+										road1=false;
+									}
+								}
+							}
+							else
+							{
+								road1=true;
+							}
+						}
+						
+						else
+						{
+							road1=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==1&&landform_map[getid(width,tempx21,tempy21)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(have_detective_skill==false)
+							{
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx21,tempy21)]==2)
+								{
+									road1=false;
+								}
+								else
+								{
+									road1=true;
+								}
+							}
+							else
+							{
+								road1=true;
+							}
+						}
+						
+						else
+						{
+							road1=true;
+						}
+						
+					}
+					
+				}
+				else
+				{
+					road1=false;
+				}
+
+				//road2
+				if(tempx11>=0&&tempx11<width&&tempy11>=0&&tempy11<height&&tempx22>=0&&tempx22<width&&tempy22>=0&&tempy22<height)
+				{
+					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx22,tempy22)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(have_detective_skill==false)
+							{
+								road2=true;
+								if(landform_map[getid(width,tempx11,tempy11)]==2)
+								{
+									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									{
+										road2=false;
+									}
+								}
+								if(landform_map[getid(width,tempx22,tempy22)]==2)
+								{
+									if(resource_map[getid(width,tempx22,tempy22)]==2)
+									{
+										road2=false;
+									}
+								}
+							}
+							else
+							{
+								road2=true;
+							}
+						}
+						
+						else
+						{
+							road2=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==1&&landform_map[getid(width,tempx22,tempy22)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(have_detective_skill==false)
+							{
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx22,tempy22)]==2)
+								{
+									road2=false;
+								}
+								else
+								{
+									road2=true;
+								}
+							}
+							else
+							{
+								road2=true;
+							}
+						}
+						
+						else
+						{
+							road2=true;
+						}
+						
+					}
+					
+				}
+				else
+				{
+					road2=false;
+				}
+
+				//road3
+				if(tempx12>=0&&tempx12<width&&tempy12>=0&&tempy12<height&&tempx22>=0&&tempx22<width&&tempy22>=0&&tempy22<height)
+				{
+					if(landform_map[getid(width,tempx12,tempy12)]==2||landform_map[getid(width,tempx22,tempy22)]==2)
+					{
+						if(landform_map[centerid]==2&&landform_map[id]==2)
+						{
+							if(have_detective_skill==false)
+							{
+								road3=true;
+								if(landform_map[getid(width,tempx12,tempy12)]==2)
+								{
+									if(resource_map[getid(width,tempx12,tempy12)]==2)
+									{
+										road3=false;
+									}
+								}
+								if(landform_map[getid(width,tempx22,tempy22)]==2)
+								{
+									if(resource_map[getid(width,tempx22,tempy22)]==2)
+									{
+										road3=false;
+									}
+								}
+							}
+							else
+							{
+								road3=true;
+							}
+						}
+						
+						else
+						{
+							road3=false;
+						}
+						
+					}
+					else if(landform_map[getid(width,tempx12,tempy12)]==1&&landform_map[getid(width,tempx22,tempy22)]==1)
+					{
+						if(landform_map[centerid]==1&&landform_map[id]==1)
+						{
+							if(have_detective_skill==false)
+							{
+								if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx22,tempy22)]==2)
+								{
+									road3=false;
+								}
+								else
+								{
+									road3=true;
+								}
+							}
+							else
+							{
+								road3=true;
+							}
+						}
+						
+						else
+						{
+							road3=true;
+						}
+						
+					}
+					
+				}
+				else
+				{
+					road3=false;
+				}
+
+				if(road1||road2||road3)
+				{
+					result.push(id);
+				}
+			}
+		}
+	}
+
+
+	return result;
+}
+
+
+exports.getsightzoon_of_building=function(building_id,gameinfo)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+
+
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
+
+	var width=gametype.width;
+	var height=gametype.height;
+
+	var result=[];
+
+	var building=gameinfo.buildings[building_id];
+	var centerid=building.pos_id;
+	
+
+	
+	var sightdistence=1;
+	//拥有远眺技能，视野增加一格
+	if(building.far_sight>0)
+	{
+		sightdistence++;
+	}
+	//站在山地上，视野增加一格
+	if(gameinfo.map.landform[centerid]==2)
+	{
+		sightdistence++;
+	}
+
+	var have_detective_skill=building.see_through>0;
+
 	var center=getxy(width,centerid);
 	var sightSystem=sightSys[center.x&1];
 
@@ -1249,28 +2067,44 @@ exports.getsightzoon=function(centerid,have_farsight_skill,have_detective_skill,
 	return result;
 }
 
-exports.getsightzoon_of_role=function(roleid,game_total_role,game_total_map,width,height)
-{
-	var landform_map=game_total_map.landform_map;
-	var resource_map=game_total_map.resource_map;
-	var role=game_total_role[roleid];
-	var sightzoon=exports.getsightzoon(role.pos_id,skilllib.get_role_farsight(role.roleid,game_total_role),skilllib.get_role_detective(role.roleid,game_total_role),game_total_map,width,height);
-	return sightzoon;
-}
 
-exports.getsightzoon_of_player=function(uid,game_total_role,game_total_map,width,height)
+
+
+
+
+
+exports.getsightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
 {
-	var landform_map=game_total_map.landform_map;
-	var resource_map=game_total_map.resource_map;
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
 	var sightzoon=[];
 	var role;
 	var temp_zoon;
-	for(roleid in game_total_role)
+	for(role_id in gameinfo.roles)
 	{
-		role=game_total_role[roleid];
+
+		role=gameinfo.roles[role_id];
 		if(role.uid==uid)
 		{
-			temp_zoon=exports.getsightzoon_of_role(role.roleid,game_total_role,game_total_map,width,height);
+			temp_zoon=exports.getsightzoon_of_role(role_id,gameinfo)//_total_role,game_total_map,gametype);
+			// console.log(temp_zoon);
+			for(i in temp_zoon)
+			{
+				if(sightzoon.indexOf(temp_zoon[i])==-1)
+				{
+					sightzoon.push(temp_zoon[i]);
+				}
+			}
+		}
+	}
+
+	for(building_id in gameinfo.buildings)
+	{
+		building=gameinfo.buildings[building_id];
+		if(role.uid==uid)
+		{
+			temp_zoon=exports.getsightzoon_of_building(building_id,gameinfo)//_total_role,game_total_map,gametype);
+			// console.log(temp_zoon);
 			for(i in temp_zoon)
 			{
 				if(sightzoon.indexOf(temp_zoon[i])==-1)
@@ -1284,83 +2118,299 @@ exports.getsightzoon_of_player=function(uid,game_total_role,game_total_map,width
 	return sightzoon;
 }
 
-exports.get_roles_in_sightzoon_of_player=function(uid,game_total_role,game_total_map,width,height)
+exports.get_roles_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
 {
-	var landform_map=game_total_map.landform_map;
-	var resource_map=game_total_map.resource_map;
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
 
 	var roles={};
-	var role;
-	var sightzoon=exports.getsightzoon_of_player(uid,game_total_role,game_total_map,width,height);
-
-	for(roleid in game_total_role)
+	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
+	// console.log(sightzoon)
+	for(role_id in gameinfo.roles)
 	{
-		role=game_total_role[roleid];
+		var role=gameinfo.roles[role_id];
 		if(sightzoon.indexOf(role.pos_id)!=-1)
 		{
-			roles[role.roleid]={};
-			roles[role.roleid].roleid=role.roleid;
-			roles[role.roleid].roledid=role.roledid;
-			roles[role.roleid].uid=role.uid;
-			roles[role.roleid].pos_id=role.pos_id;
-			roles[role.roleid].health=role.health;
-			roles[role.roleid].retreating=role.retreating==0?false:true;
-			roles[role.roleid].fighting_last_turn=role.fighting_last_turn;
-			roles[role.roleid].direction_id=role.direction_id;
-			roles[role.roleid].direction_path=role.direction_path;
-
+			roles[role.role_id]=role;
 		}
+		
 	}
 
 	return roles;
 }
 
-exports.get_roleids_in_sightzoon_of_player=function(uid,game_total_role,game_total_map,width,height)
+exports.get_role_ids_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
 {
-	var landform_map=game_total_map.landform_map;
-	var resource_map=game_total_map.resource_map;
-	
-	var roleids=[];
-	var role;
-	var sightzoon=exports.getsightzoon_of_player(uid,game_total_role,game_total_map,width,height);
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
 
-	for(roleid in game_total_role)
+	
+	var role_ids=[];
+	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
+
+	for(role_id in gameinfo.roles)
 	{
-		role=game_total_role[roleid];
+		var role=gameinfo.roles[role_id];
 		if(sightzoon.indexOf(role.pos_id)!=-1)
 		{
-			roleids.push(role.roleid);
+			role_ids.push(role.role_id);
+		}
+		
+	}
 
+	return role_ids;
+}
+
+// exports.get_buildings_of_player=function(uid,gameinfo)
+// {
+// 	var landform_map=gameinfo.map.landform;
+// 	var resource_map=gameinfo.map.resource;
+
+// 	var buildings={};
+
+// 	for(building_id in gameinfo.buildings)
+// 	{
+// 		var building=gameinfo.buildings[building_id];
+// 		var detected=gameinfo.players[uid].map[building.pos_id];
+// 		if(detected==1)
+// 		{
+// 			buildings[building.building_id]=building;
+// 		}
+		
+// 	}
+// 	return buildings;
+// }
+
+// exports.get_buildings_in_sightzoon_of_player=function(uid,gameinfo)
+// {
+// 	var landform_map=gameinfo.map.landform;
+// 	var resource_map=gameinfo.map.resource;
+
+// 	var buildings={};
+// 	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo);
+// 	for(building_id in gameinfo.buildings)
+// 	{
+// 		var building=gameinfo.buildings[building_id];
+// 		if(sightzoon.indexOf(building.pos_id)!=-1)
+// 		{
+// 			buildings[building.building_id]=building;
+// 		}
+		
+// 	}
+// 	return buildings;
+// }
+
+//只算增删改动，不算building属性的改动,并将改动写入user_building数据中
+exports.get_buildings_modefied_of_player=function(uid,gameinfo)
+{
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
+
+	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo);
+	
+	var buildings={};
+	for(building_id in gameinfo.buildings)
+	{
+		var building=gameinfo.buildings[building_id];
+		if(sightzoon.indexOf(building.pos_id)!=-1)
+		{
+			buildings[building.building_id]=building;
+		}
+		
+	}
+
+	var user_buildings={};
+	for(building_id in gameinfo.players[uid].buildings)
+	{
+		var building=gameinfo.players[uid].buildings[building_id];
+		if(sightzoon.indexOf(building.pos_id)!=-1)
+		{
+			user_buildings[building.building_id]=building;
+		}
+		else if(building.hide_when_outsight==1)
+		{
+			user_buildings[building.building_id]=building;
+		}
+		
+	}
+
+	// console.log(buildings)
+	// console.log(user_buildings)
+
+	for(building_id in buildings)
+	{
+		var building=gameinfo.buildings[building_id];
+		for(user_building_id in user_buildings)
+		{
+			var user_building=user_buildings[user_building_id];
+
+			if(building.building_id==user_building.building_id)
+			{
+				delete buildings[building_id];
+				delete user_buildings[user_building_id];
+			}
 		}
 	}
 
-	return roleids;
+	var delete_buildings=[]
+	for(user_building_id in user_buildings)
+	{
+		var user_building=user_buildings[user_building_id];
+		delete_buildings.push(user_building.building_id);
+	}
+
+	for(building_id in buildings)
+	{
+		gameinfo.players[uid].buildings[building_id]=buildings[building_id];
+	}
+	for(building_id in user_buildings)
+	{
+		delete gameinfo.players[uid].buildings[building_id];
+	}
+
+	return {
+		add:buildings,
+		delete:delete_buildings
+	};
+
 }
 
 
-exports.get_pos_movable=function(game_total_role,pos_id)
+exports.get_pos_movable=function(pos_id,gameinfo)
 {
 	var movable=true;
-	for(roleid in game_total_role)
+	for(role_id in gameinfo.roles)
 	{
-		var role=game_total_role[roleid];
+		var role=gameinfo.roles[role_id];
+		// var role_all_property=rolelib.get_role_all_property(role_id,game_total_role);
 		if(role.pos_id==pos_id)
 		{
 			movable=false;
 			break;
 		}
+		
 	}
 	return movable;
 }
 
-exports.do_role_move=function(roleid,pos_id,game_total_role,game_total_map,game_user_map,width,height)
+//只是修改数据，不做合理性检测
+exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_total_role,game_total_map,game_user_map,gametype)
 {
-	game_total_role[roleid].pos_id=pos_id;
-	var sightzoon=exports.getsightzoon_of_role(roleid,game_total_role,game_total_map,width,height);
-	for(id in sightzoon)
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var landform_source=defaultDataManager.get_d_landform(gameinfo.map.landform[source_pos_id]);
+	var landform_next=defaultDataManager.get_d_landform(gameinfo.map.landform[next_pos_id]);
+	var cost=landform_source.cost+landform_next.cost;
+
+	var role=gameinfo.roles[role_id];
+	if(role.move>=cost)
 	{
-		var pos_id=sightzoon[id];
-		game_user_map[game_total_role[roleid].uid].detective_map[pos_id]=1;
+		role.pos_id=next_pos_id;
+		role.move-=cost;
+		var sightzoon=exports.getsightzoon_of_role(role_id,gameinfo)//game_total_role,game_total_map,gametype);
+		for(id in sightzoon)
+		{
+			var pos_id_t=sightzoon[id];
+			// gameinfo.players[gameinfo.roles[role_id].uid].map[pos_id_t]=1;
+			gameinfo.players[gameinfo.roles[role_id].uid].map.landform[pos_id_t]=gameinfo.map.landform[pos_id_t];
+			gameinfo.players[gameinfo.roles[role_id].uid].map.resource[pos_id_t]=gameinfo.map.resource[pos_id_t];
+		}
 	}
+
+
+	
+	
+	// var sightzoon=exports.getsightzoon_of_player(game_total_role[role_id].uid,game_total_role,game_total_map,gametype);
+	// for(id in sightzoon)
+	// {
+	// 	var pos_id_t=sightzoon[id];
+	// }
 	
 }
+
+
+
+exports.get_enemies=function(role_id,gameinfo)//game_total_role,game_total_player,gametype)
+{
+	// console.log(role_id)
+	// console.log(gameinfo)
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var role=gameinfo.roles[role_id];
+	var neibourids=getneibourids(gametype.width,gametype.height,role.pos_id);
+	var enemies={};
+
+	for(role_id_t in gameinfo.roles)
+	{
+		var role_t=gameinfo.roles[role_id_t];
+		if(neibourids.indexOf(role_t.pos_id)!=-1)
+		{
+			if(gameinfo.players[role_t.uid].group_id!=gameinfo.players[role.uid].group_id)
+			{
+				enemies[role_id_t]=role_t;
+			}
+		}
+		
+	}
+
+	return enemies;
+}
+
+//role中应该已经添加了first_p和secend_p两个临时变量
+exports.fill_retreat_spot=function(role_id,enemies,gameinfo)//game_total_role,gametype)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var role=gameinfo.roles[role_id];
+	var neibourids=getneibourids(gametype.width,gametype.height,role.pos_id);
+
+	for(enemy_id in enemies)
+	{
+		var enemy=enemies[enemy_id];
+		var relation;
+		for(i in neibourids)
+		{
+			var neibourid=neibourids[i];
+			if(neibourid==enemy.pos_id)
+			{
+				relation=parseInt(i);
+				break;
+			}
+		}
+		var first_spot=neibourids[(relation+3)%6];
+		role.first_p.push(first_spot);
+		var secend_spot=neibourids[(relation+2)%6];
+		if(role.secend_p.indexOf(secend_spot)==-1)
+		{
+			role.secend_p.push(secend_spot);
+		}
+		secend_spot=neibourids[(relation+4)%6];
+		if(role.secend_p.indexOf(secend_spot)==-1)
+		{
+			role.secend_p.push(secend_spot);
+		}
+	}
+	
+	
+}
+// exports.get_random_pos_id=function(gametype)
+// {
+// 	var pos_ids=[];
+// 	// var x,y;
+
+// 	switch(gametype.gametype_id)
+// 	{
+// 		case 1:
+// 			var pos_id=parseInt(gametype.width*gametype.height/2);
+// 			pos_ids.push(pos_id);
+// 			break;
+// 		case 2:
+			
+
+			
+// 	}
+
+// 	return pos_ids;
+
+// }
+
+
+
+

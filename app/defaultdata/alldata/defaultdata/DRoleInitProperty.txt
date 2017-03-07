@@ -1,0 +1,1 @@
+{"1":{"role_did":1,"blood_sugar_max":60,"blood_sugar":60,"muscle":60,"fat":60,"amino_acid":0,"breath":5,"digest":0,"courage":0,"far_sight":1,"see_through":0,"climb":0,"skill_did_list":[]},"2":{"role_did":2,"blood_sugar_max":120,"blood_sugar":110,"muscle":120,"fat":40,"amino_acid":0,"breath":10,"digest":0,"courage":0,"far_sight":0,"see_through":0,"climb":0,"skill_did_list":[]}}

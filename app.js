@@ -23,17 +23,31 @@ var timeRoute = function(routeParam, msg, app, cb) {
   cb(null, timeServers[routeParam % timeServers.length].id);
 }
 
-var userRoute = function(routeParam, msg, app, cb) {
-  var userServers = app.getServersByType('user');
-  if(!userServers || userServers.length === 0) {
-		cb(new Error('can not find chat servers.'));
-		return;
-	}
+// var gameRoute = function(routeParam, msg, app, cb) {
+//   var userServers = app.getServersByType('game');
+//   if(!userServers || userServers.length === 0) {
+// 		cb(new Error('can not find chat servers.'));
+// 		return;
+// 	}
 
-	var res = userServers[0];//dispatcher.dispatch(session.get('rid'), userServers);
-
-	cb(null, res.id);
+var gamedataRoute=function(sid,msg,app,cb)
+{
+	// var servers = app.getServersByType('gamedata');
+	cb(null,sid);
 }
+
+var gamechannelRoute=function(sid,msg,app,cb)
+{
+	// var servers = app.getServersByType('gamechannel');
+	cb(null,sid);
+}
+	
+
+// 	// var res = gameServers[0];
+
+// 	// cb(null, res.id);
+// 	cb(null,routeParam);
+// }
 
 /**
  * Init app for client.
@@ -46,29 +60,60 @@ app.configure('production|development', function() {
 	// route configures
 	app.route('chat', chatRoute);
   app.route('time', timeRoute);
-  app.route('user',userRoute);
+  // app.route('game',gameRoute);
+  app.route('gamedata',gamedataRoute);
+  app.route('gamechannel',gamechannelRoute);
   app.filter(pomelo.timeout());
   app.loadConfig('mysql', app.getBase() + '/config/mysql.json');
   // var dbclient = require('./app/dao/mysql/mysql').init(app);
   // app.set('dbclient', dbclient);
-
-  var db=require('./app/dao/mysql/mysql_transaction').init(app);
-  app.set('db', db);
+  // console.log('333');
+  // console.log(app.get('serverId'));
+  
 	// app.load(pomelo.sync, {path:__dirname + '/app/dao/mapping', dbclient: dbclient});
   // app.use(sync, {sync: {path:__dirname + '/app/dao/mapping', dbclient: dbclient}});
-  var defaultDataManager=require('./app/defaultdata/defaultDataManager').init();
+  
+  var db=require('./app/dao/mysql/mysql_transaction').init(app);
+  app.set('db', db);
   
 });
 
-
-
 // app configuration
+app.configure('production|development', 'ddatawriter', function() {
+
+  var defaultDataManager=require('./app/defaultdata/defaultDataManager').init(true);
+});
+
+app.configure('production|development', 'gamedata', function() {
+	// var db=require('./app/dao/mysql/mysql_transaction').init(app);
+ //  app.set('db', db);
+  var defaultDataManager=require('./app/defaultdata/defaultDataManager').init();
+  app.set('defaultDataManager', defaultDataManager);
+
+  
+});
+
+app.configure('production|development', 'gamelist', function() {
+  // var db=require('./app/dao/mysql/mysql_transaction').init(app);
+  // app.set('db', db);
+  var defaultDataManager=require('./app/defaultdata/defaultDataManager').init();
+  app.set('defaultDataManager', defaultDataManager);
+
+  
+});
+
+// app.configure('production|development', 'gamedataio', function() {
+//   var db=require('./app/dao/mysql/mysql_transaction').init(app);
+//   app.set('db', db);
+// });
+
+
 app.configure('production|development', 'connector', function(){
 	app.set('connectorConfig',
 		{
 			connector : pomelo.connectors.hybridconnector,
-			heartbeat : 1,
-			// timeout:5,
+			heartbeat : 10,
+			timeout:60,
 			disconnectOnTimeout:true,
 			
 			// handshake:handshake,

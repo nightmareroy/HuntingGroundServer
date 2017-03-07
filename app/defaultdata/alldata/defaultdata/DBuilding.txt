@@ -1,0 +1,1 @@
+{"1":{"building_did":1,"name":"树窝","cost":100,"max_level":1},"2":{"building_did":2,"name":"侦查猴子","cost":5,"max_level":2},"3":{"building_did":3,"name":"猴子","cost":20,"max_level":3}}

@@ -1,0 +1,1 @@
+{"0":{"resource_id":0,"desc":"未探索"},"1":{"resource_id":1,"desc":"无资源"},"2":{"resource_id":2,"desc":"森林"},"3":{"resource_id":3,"desc":"石头"}}

@@ -13,6 +13,7 @@ var db=pomelo.app.get('db');
 var logger = require('pomelo-logger').getLogger(__filename);
 
 var md5=require("../../../util/md5");
+var async=require('async');
 
 /**
  * New client entry chat server.
@@ -77,81 +78,140 @@ handler.login = function(msg, session, next) {
 	var pwd=msg['pwd'];
 	pwd=md5.md5(pwd);
 
-	var sql="select * from user where account=?";
 
-	db.query(sql,account,(err, rows,fields)=>{
-		if (err)
-		{
-			next(
-				null,
-				{
-					code:500,
-					data:err
-				}
-			)
-			return;
-		} 
-		else {
-			if(rows.length==0)
+	var user;
+	var player;
+
+
+	var connection;
+	var sql;
+	var funcs=[];
+	funcs.push((cb)=>{
+		db.getConnection((err,conn)=>{
+			connection=conn;
+			cb(err);
+		});
+	});
+	funcs.push((cb)=>{
+		connection.beginTransaction((err)=>{
+			cb(err);
+		});
+	});
+	funcs.push((cb)=>{
+		sql="select * from user where account=?";
+		connection.query(sql,account,(err,rows)=>{
+			if(rows)
 			{
-				next(
-					null,
+				if(rows.length==0)
+				{
+					cb('account does not exist!');
+				}
+				else
+				{
+					user=rows[0];
+					if(pwd!=user.pwd)
 					{
-						code:500,
-						data:"account dosn't exist!"
+						cb('the pwd is wrong!');
 					}
-				)
-				return
+					else if( !! sessionService.getByUid(user.uid)) {
+						cb('duplicate log in!')
+					}
+					else
+					{
+						cb();
+					}
+				}
+
+				
+				
+				
+			}
+			else
+			{
+				cb(err);
 			}
 			
-			var user=rows[0];
+		});
+	});
 
-			if(pwd!=user.pwd)
-			{
-				next(
-					null,
-					{
-						code:500,
-						data:"the pwd is wrong!"
-					}
-				)
-				return;
-			}
-			
+	// funcs.push((cb)=>{
+	// 	sql="select * from game_total_player where uid=?";
+	// 	connection.query(sql,user.uid,(err,rows)=>{
+	// 		if(rows)
+	// 		{
+	// 			if(rows.length>0)
+	// 			{
+	// 				player=rows[0];
+	// 			}
+				
+	// 		}
+	// 		cb(err);
+	// 	});
+	// });
 
-			//duplicate log in
-			if( !! sessionService.getByUid(user.uid)) {
-				next(null, {
-					code: 500,
-					data: "duplicate log in!"
-				});
-				return;
-			}
-			session.bind(user.uid);
-			session.set('sid', this.app.get('serverId'));
-			session.push('sid', function(err) {
-				if(err) {
-					console.error('set sid for session service failed! error is : %j', err.stack);
-				}
-			});
-			// this.app.rpc.connector.entryRemote.joingame(session, user.uid, self.app.get('serverId'), true);
-			session.on('closed', onLeaveGame.bind(null, this.app));
-			next(
-				null,
-				{
-					code:200,
-					data:{
-						uid:user.uid,
-						account:user.account,
-						// current_game_id:user.current_game_id,
-						win_count:user.win_count,
-						fail_count:user.fail_count
-					}
-				}
-			)
-		}
+	funcs.push((cb)=>{
+		session.bind(user.uid);
+		session.on('closed', onLeaveGame.bind(null, this.app));
+		// console.log('session id::::::'+session.id);
+		//sid
+		session.set('sid', this.app.get('serverId'));
+		session.set('user_name',user.name);
+		session.pushAll((err)=>{
+			cb(err)
+			// if(err) {
+			// 	console.error('set sid for session service failed! error is : %j', err.stack);
+			// 	cb('set sid for session service failed!');
+			// }
+		});
 
 	});
+
+
+
+	async.waterfall(funcs,(err,result)=>{
+		if(err)
+		{
+			connection.rollback((err_rollback)=>{
+				connection.release();
+				console.log(err);
+				next(
+					null,
+					{
+						code:500,
+						data:false
+					}
+				)
+			});
+		}
+		else
+		{
+			connection.commit((err_commit)=>{
+				connection.release();
+				next(
+					null,
+					{
+						code:200,
+						data:{
+							splayer:{
+								uid:user.uid,
+								account:user.account,
+								// current_game_id:user.current_game_id,
+								win_count:user.win_count,
+								fail_count:user.fail_count,
+								name:user.name
+								
+
+							},
+							isingame:session.get('creator_id')!=undefined
+						}
+						
+					}
+				)
+			});
+			
+		}
+	});
+
 	
 }
 
@@ -160,13 +220,34 @@ var onLeaveGame=function(app,session)
 	if(!session || !session.uid) {
 		return;
 	}
-	var gameid=session.get('gameid');
-	//session.remove('gameid');//需要手动删除吗？
+	// var gameid=session.get('gameid');
+
 	
-	if(gameid!=undefined)
+	
+	
+	
+	//删除gamehall数据
+	app.rpc.gamelist.gamelistRemote.onLeaveGameHall(session,session.frontendId,session.uid,()=>{
+		// session.delete('creator_id');
+	});
+
+	//删除gamedata和channel数据
+	console.log('call leave');
+	// console.log(session.get('creator_id'));
+	var	creator_id=session.get('creator_id');
+	var gamedata_sid=session.get('gamedata_sid');
+	var gamechannel_sid=session.get('gamechannel_sid');
+	if(creator_id!=undefined)
 	{
-		app.rpc.connector.entryRemote.leavegame(session, session.uid,gameid,null);
+		app.rpc.game.gameRemote.OnUserLeave(session, creator_id,gamedata_sid,gamechannel_sid,session.uid,(err)=>{
+		});
+		
 	}
+
+	
+
+
+	
 	
 }
 

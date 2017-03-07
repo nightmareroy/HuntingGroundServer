@@ -16,6 +16,21 @@
         ],
         "game":[
           {"id":"game-server-1","host":"127.0.0.1","port":8050}
+        ],
+        "gamelist":[
+          {"id":"gamelist-server-1","host":"127.0.0.1","port":9050}
+        ],
+        "gamedata":[
+          {"id":"gamedata-server-1","host":"127.0.0.1","port":10050},
+          {"id":"gamedata-server-2","host":"127.0.0.1","port":10051}
+        ],
+        "gamechannel":[
+          {"id":"gamechannel-server-1","host":"127.0.0.1","port":11050},
+          {"id":"gamechannel-server-2","host":"127.0.0.1","port":11051},
+          {"id":"gamechannel-server-3","host":"127.0.0.1","port":11052}
+        ],
+        "ddatawriter":[
+          {"id": "ddatawriter-server-1", "host":"127.0.0.1", "port" : 12050}
         ]
 
     },
@@ -36,6 +51,21 @@
         ],
         "game":[
           {"id":"game-server-1","host":"127.0.0.1","port":8050}
+        ],
+        "gamelist":[
+          {"id":"gamelist-server-1","host":"127.0.0.1","port":9050}
+        ],
+        "gamedata":[
+          {"id":"gamedata-server-1","host":"127.0.0.1","port":10050},
+          {"id":"gamedata-server-2","host":"127.0.0.1","port":10051}
+        ],
+        "gamechannel":[
+          {"id":"gamechannel-server-1","host":"127.0.0.1","port":11050},
+          {"id":"gamechannel-server-2","host":"127.0.0.1","port":11051},
+          {"id":"gamechannel-server-3","host":"127.0.0.1","port":11052}
+        ],
+        "ddatawriter":[
+          {"id": "ddatawriter-server-1", "host":"127.0.0.1", "port" : 12050}
         ]
   }
 }
