@@ -144,6 +144,27 @@ exports.get_neibour_ids=function(gameinfo,pos_id)
 	return getneibourids(gametype.width,gametype.height,pos_id);
 }
 
+var get_circle_ids=function(gameinfo,pos_id,circle_id)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var xy=getxy(gametype.width,pos_id);
+	var circle_ids_dic=sightSys[xy.x&1];
+
+
+	var result=[];
+	for(i in circle_ids_dic[circle_id])
+	{
+		var xx=xy.x+circle_ids_dic[circle_id][i][0];
+		var yy=xy.y+circle_ids_dic[circle_id][i][1];
+
+		if(xx>=0&&xx<width&&yy>=0&&yy<height)
+		{
+			result.push(getid(width,xx,yy));
+		}
+	}
+	return result;
+}
+
 var genshadowborderids=function(centerid,width,height,targetid,radius,includefirst)
 {
 	var center=getxy(width,centerid);
@@ -588,9 +609,9 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx,tempy)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
-							if(resource_map[getid(width,tempx,tempy)]!=2)
+							if(resource_map[getid(width,tempx,tempy)]!=2&&resource_map[getid(width,tempx,tempy)]!=3)
 							{
 								road=true;
 							}
@@ -610,7 +631,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 					{
 						if(landform_map[centerid]==1&&landform_map[id]==1)
 						{
-							if(resource_map[getid(width,tempx,tempy)]==2)
+							if(resource_map[getid(width,tempx,tempy)]==2||resource_map[getid(width,tempx,tempy)]==3)
 							{
 								road=have_detective_skill;
 							}
@@ -623,6 +644,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						{
 							road=true;
 						}
+					}
+					else if(landform_map[getid(width,tempx,tempy)]==3)
+					{
+						road=false;
 					}
 					
 				}
@@ -689,9 +714,9 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx1,tempy1)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
-							if(resource_map[getid(width,tempx1,tempy1)]!=2)
+							if(resource_map[getid(width,tempx1,tempy1)]!=2&&resource_map[getid(width,tempx1,tempy1)]!=3)
 							{
 								road1=true;
 							}
@@ -711,7 +736,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 					{
 						if(landform_map[centerid]==1&&landform_map[id]==1)
 						{
-							if(resource_map[getid(width,tempx1,tempy1)]==2)
+							if(resource_map[getid(width,tempx1,tempy1)]==2||resource_map[getid(width,tempx1,tempy1)]==3)
 							{
 								road1=have_detective_skill;
 							}
@@ -725,6 +750,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 							road1=true;
 						}
 					}
+					else if(landform_map[getid(width,tempx1,tempy1)]==3)
+					{
+						road1=false;
+					}
 					
 				}
 				else
@@ -736,9 +765,9 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx2,tempy2)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
-							if(resource_map[getid(width,tempx2,tempy2)]!=2)
+							if(resource_map[getid(width,tempx2,tempy2)]!=2&&resource_map[getid(width,tempx2,tempy2)]!=3)
 							{
 								road2=true;
 							}
@@ -758,7 +787,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 					{
 						if(landform_map[centerid]==1&&landform_map[id]==1)
 						{
-							if(resource_map[getid(width,tempx2,tempy2)]==2)
+							if(resource_map[getid(width,tempx2,tempy2)]==2||resource_map[getid(width,tempx2,tempy2)]==3)
 							{
 								road2=have_detective_skill;
 							}
@@ -771,6 +800,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						{
 							road2=true;
 						}
+					}
+					else if(landform_map[getid(width,tempx2,tempy2)]==3)
+					{
+						road2=false;
 					}
 					
 				}
@@ -848,7 +881,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx21,tempy21)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
@@ -906,6 +939,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 							road=true;
 						}
 						
+					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==3||landform_map[getid(width,tempx21,tempy21)]==3)
+					{
+						road=false;
 					}
 					
 				}
@@ -1053,21 +1090,21 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx21,tempy21)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
 								road1=true;
 								if(landform_map[getid(width,tempx11,tempy11)]==2)
 								{
-									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx11,tempy11)]==3)
 									{
 										road1=false;
 									}
 								}
 								if(landform_map[getid(width,tempx21,tempy21)]==2)
 								{
-									if(resource_map[getid(width,tempx21,tempy21)]==2)
+									if(resource_map[getid(width,tempx21,tempy21)]==2||resource_map[getid(width,tempx21,tempy21)]==3)
 									{
 										road1=false;
 									}
@@ -1091,7 +1128,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						{
 							if(have_detective_skill==false)
 							{
-								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx21,tempy21)]==2)
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx21,tempy21)]==2||resource_map[getid(width,tempx11,tempy11)]==3||resource_map[getid(width,tempx21,tempy21)]==3)
 								{
 									road1=false;
 								}
@@ -1112,6 +1149,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						}
 						
 					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==3||landform_map[getid(width,tempx21,tempy21)]==3)
+					{
+						road1=false;
+					}
 					
 				}
 				else
@@ -1124,21 +1165,21 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx22,tempy22)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
 								road2=true;
 								if(landform_map[getid(width,tempx11,tempy11)]==2)
 								{
-									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx11,tempy11)]==3)
 									{
 										road2=false;
 									}
 								}
 								if(landform_map[getid(width,tempx22,tempy22)]==2)
 								{
-									if(resource_map[getid(width,tempx22,tempy22)]==2)
+									if(resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx22,tempy22)]==3)
 									{
 										road2=false;
 									}
@@ -1162,7 +1203,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						{
 							if(have_detective_skill==false)
 							{
-								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx22,tempy22)]==2)
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx11,tempy11)]==3||resource_map[getid(width,tempx22,tempy22)]==3)
 								{
 									road2=false;
 								}
@@ -1183,6 +1224,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						}
 						
 					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==3||landform_map[getid(width,tempx22,tempy22)]==3)
+					{
+						road2=false;
+					}
 					
 				}
 				else
@@ -1195,21 +1240,21 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx12,tempy12)]==2||landform_map[getid(width,tempx22,tempy22)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
 								road3=true;
 								if(landform_map[getid(width,tempx12,tempy12)]==2)
 								{
-									if(resource_map[getid(width,tempx12,tempy12)]==2)
+									if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx12,tempy12)]==3)
 									{
 										road3=false;
 									}
 								}
 								if(landform_map[getid(width,tempx22,tempy22)]==2)
 								{
-									if(resource_map[getid(width,tempx22,tempy22)]==2)
+									if(resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx22,tempy22)]==3)
 									{
 										road3=false;
 									}
@@ -1233,7 +1278,7 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 						{
 							if(have_detective_skill==false)
 							{
-								if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx22,tempy22)]==2)
+								if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx12,tempy12)]==3||resource_map[getid(width,tempx22,tempy22)]==3)
 								{
 									road3=false;
 								}
@@ -1253,6 +1298,10 @@ exports.getsightzoon_of_role=function(role_id,gameinfo)
 							road3=true;
 						}
 						
+					}
+					else if(landform_map[getid(width,tempx12,tempy12)]==3||landform_map[getid(width,tempx22,tempy22)]==3)
+					{
+
 					}
 					
 				}
@@ -1382,9 +1431,9 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx,tempy)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
-							if(resource_map[getid(width,tempx,tempy)]!=2)
+							if(resource_map[getid(width,tempx,tempy)]!=2&&resource_map[getid(width,tempx,tempy)]!=3)
 							{
 								road=true;
 							}
@@ -1404,7 +1453,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 					{
 						if(landform_map[centerid]==1&&landform_map[id]==1)
 						{
-							if(resource_map[getid(width,tempx,tempy)]==2)
+							if(resource_map[getid(width,tempx,tempy)]==2||resource_map[getid(width,tempx,tempy)]==3)
 							{
 								road=have_detective_skill;
 							}
@@ -1417,6 +1466,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						{
 							road=true;
 						}
+					}
+					else if(landform_map[getid(width,tempx,tempy)]==3)
+					{
+						road=false;
 					}
 					
 				}
@@ -1483,9 +1536,9 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx1,tempy1)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
-							if(resource_map[getid(width,tempx1,tempy1)]!=2)
+							if(resource_map[getid(width,tempx1,tempy1)]!=2&&resource_map[getid(width,tempx1,tempy1)]!=3)
 							{
 								road1=true;
 							}
@@ -1505,7 +1558,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 					{
 						if(landform_map[centerid]==1&&landform_map[id]==1)
 						{
-							if(resource_map[getid(width,tempx1,tempy1)]==2)
+							if(resource_map[getid(width,tempx1,tempy1)]==2||resource_map[getid(width,tempx1,tempy1)]==3)
 							{
 								road1=have_detective_skill;
 							}
@@ -1519,6 +1572,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 							road1=true;
 						}
 					}
+					else if(landform_map[getid(width,tempx1,tempy1)]==3)
+					{
+						road1=false;
+					}
 					
 				}
 				else
@@ -1530,9 +1587,9 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx2,tempy2)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
-							if(resource_map[getid(width,tempx2,tempy2)]!=2)
+							if(resource_map[getid(width,tempx2,tempy2)]!=2&&resource_map[getid(width,tempx2,tempy2)]!=3)
 							{
 								road2=true;
 							}
@@ -1552,7 +1609,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 					{
 						if(landform_map[centerid]==1&&landform_map[id]==1)
 						{
-							if(resource_map[getid(width,tempx2,tempy2)]==2)
+							if(resource_map[getid(width,tempx2,tempy2)]==2||resource_map[getid(width,tempx2,tempy2)]==3)
 							{
 								road2=have_detective_skill;
 							}
@@ -1565,6 +1622,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						{
 							road2=true;
 						}
+					}
+					else if(landform_map[getid(width,tempx2,tempy2)]==3)
+					{
+						road2=false;
 					}
 					
 				}
@@ -1642,7 +1703,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx21,tempy21)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
@@ -1700,6 +1761,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 							road=true;
 						}
 						
+					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==3||landform_map[getid(width,tempx21,tempy21)]==3)
+					{
+						road=false;
 					}
 					
 				}
@@ -1847,21 +1912,21 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx21,tempy21)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
 								road1=true;
 								if(landform_map[getid(width,tempx11,tempy11)]==2)
 								{
-									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx11,tempy11)]==3)
 									{
 										road1=false;
 									}
 								}
 								if(landform_map[getid(width,tempx21,tempy21)]==2)
 								{
-									if(resource_map[getid(width,tempx21,tempy21)]==2)
+									if(resource_map[getid(width,tempx21,tempy21)]==2||resource_map[getid(width,tempx21,tempy21)]==3)
 									{
 										road1=false;
 									}
@@ -1885,7 +1950,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						{
 							if(have_detective_skill==false)
 							{
-								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx21,tempy21)]==2)
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx21,tempy21)]==2||resource_map[getid(width,tempx11,tempy11)]==3||resource_map[getid(width,tempx21,tempy21)]==3)
 								{
 									road1=false;
 								}
@@ -1906,6 +1971,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						}
 						
 					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==3||landform_map[getid(width,tempx21,tempy21)]==3)
+					{
+						road1=false;
+					}
 					
 				}
 				else
@@ -1918,21 +1987,21 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx11,tempy11)]==2||landform_map[getid(width,tempx22,tempy22)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
 								road2=true;
 								if(landform_map[getid(width,tempx11,tempy11)]==2)
 								{
-									if(resource_map[getid(width,tempx11,tempy11)]==2)
+									if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx11,tempy11)]==3)
 									{
 										road2=false;
 									}
 								}
 								if(landform_map[getid(width,tempx22,tempy22)]==2)
 								{
-									if(resource_map[getid(width,tempx22,tempy22)]==2)
+									if(resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx22,tempy22)]==3)
 									{
 										road2=false;
 									}
@@ -1956,7 +2025,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						{
 							if(have_detective_skill==false)
 							{
-								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx22,tempy22)]==2)
+								if(resource_map[getid(width,tempx11,tempy11)]==2||resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx11,tempy11)]==3||resource_map[getid(width,tempx22,tempy22)]==3)
 								{
 									road2=false;
 								}
@@ -1977,6 +2046,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						}
 						
 					}
+					else if(landform_map[getid(width,tempx11,tempy11)]==3||landform_map[getid(width,tempx22,tempy22)]==3)
+					{
+						road2=false;
+					}
 					
 				}
 				else
@@ -1989,21 +2062,21 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 				{
 					if(landform_map[getid(width,tempx12,tempy12)]==2||landform_map[getid(width,tempx22,tempy22)]==2)
 					{
-						if(landform_map[centerid]==2&&landform_map[id]==2)
+						if(landform_map[centerid]==2&&(landform_map[id]==2||landform_map[id]==3))
 						{
 							if(have_detective_skill==false)
 							{
 								road3=true;
 								if(landform_map[getid(width,tempx12,tempy12)]==2)
 								{
-									if(resource_map[getid(width,tempx12,tempy12)]==2)
+									if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx12,tempy12)]==3)
 									{
 										road3=false;
 									}
 								}
 								if(landform_map[getid(width,tempx22,tempy22)]==2)
 								{
-									if(resource_map[getid(width,tempx22,tempy22)]==2)
+									if(resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx22,tempy22)]==3)
 									{
 										road3=false;
 									}
@@ -2027,7 +2100,7 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 						{
 							if(have_detective_skill==false)
 							{
-								if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx22,tempy22)]==2)
+								if(resource_map[getid(width,tempx12,tempy12)]==2||resource_map[getid(width,tempx22,tempy22)]==2||resource_map[getid(width,tempx12,tempy12)]==3||resource_map[getid(width,tempx22,tempy22)]==3)
 								{
 									road3=false;
 								}
@@ -2047,6 +2120,10 @@ exports.getsightzoon_of_building=function(building_id,gameinfo)
 							road3=true;
 						}
 						
+					}
+					else if(landform_map[getid(width,tempx12,tempy12)]==3||landform_map[getid(width,tempx22,tempy22)]==3)
+					{
+
 					}
 					
 				}
@@ -2131,7 +2208,41 @@ exports.get_roles_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role
 		var role=gameinfo.roles[role_id];
 		if(sightzoon.indexOf(role.pos_id)!=-1)
 		{
-			roles[role.role_id]=role;
+			if(resource_map[role.pos_id]==3)
+			{
+				var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
+				if(role_all_property.hide==0)
+				{
+					roles[role.role_id]=role;
+				}
+				else if(gameinfo.player[uid].group_id==gameinfo.player[role.uid].group_id)
+				{
+					roles[role.role_id]=role;
+				}
+				else
+				{
+					var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+					var neibourids=getneibourids(gametype.width,gametype.height,role.pos_id);
+					var saw=false;
+					for(role_id_t in gameinfo.roles)
+					{
+						var role_t=gameinfo.roles[role_id_t];
+						if(neibourids.indexOf(role_t.pos_id))
+						{
+							saw=true;
+							break;
+						}
+					}
+					if(saw)
+					{
+						roles[role.role_id]=role;
+					}
+				}
+			}
+			else
+			{
+				roles[role.role_id]=role;
+			}
 		}
 		
 	}
@@ -2139,27 +2250,27 @@ exports.get_roles_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role
 	return roles;
 }
 
-exports.get_role_ids_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
-{
-	var landform_map=gameinfo.map.landform;
-	var resource_map=gameinfo.map.resource;
+// exports.get_role_ids_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
+// {
+// 	var landform_map=gameinfo.map.landform;
+// 	var resource_map=gameinfo.map.resource;
 
 	
-	var role_ids=[];
-	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
+// 	var role_ids=[];
+// 	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
 
-	for(role_id in gameinfo.roles)
-	{
-		var role=gameinfo.roles[role_id];
-		if(sightzoon.indexOf(role.pos_id)!=-1)
-		{
-			role_ids.push(role.role_id);
-		}
+// 	for(role_id in gameinfo.roles)
+// 	{
+// 		var role=gameinfo.roles[role_id];
+// 		if(sightzoon.indexOf(role.pos_id)!=-1)
+// 		{
+// 			role_ids.push(role.role_id);
+// 		}
 		
-	}
+// 	}
 
-	return role_ids;
-}
+// 	return role_ids;
+// }
 
 // exports.get_buildings_of_player=function(uid,gameinfo)
 // {
@@ -2302,7 +2413,7 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 	var cost=landform_source.cost+landform_next.cost;
 
 	var role=gameinfo.roles[role_id];
-	if(role.move>=cost)
+	if(role.move>=cost&&landform_next.cost>0)
 	{
 		role.pos_id=next_pos_id;
 		role.move-=cost;
@@ -2314,6 +2425,11 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 			gameinfo.players[gameinfo.roles[role_id].uid].map.landform[pos_id_t]=gameinfo.map.landform[pos_id_t];
 			gameinfo.players[gameinfo.roles[role_id].uid].map.resource[pos_id_t]=gameinfo.map.resource[pos_id_t];
 		}
+		return true;
+	}
+	else
+	{
+		return false;
 	}
 
 
@@ -2329,29 +2445,102 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 
 
 
-exports.get_enemies=function(role_id,gameinfo)//game_total_role,game_total_player,gametype)
+exports.get_enemy=function(role_id,gameinfo)//game_total_role,game_total_player,gametype)
 {
 	// console.log(role_id)
 	// console.log(gameinfo)
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 	var role=gameinfo.roles[role_id];
-	var neibourids=getneibourids(gametype.width,gametype.height,role.pos_id);
-	var enemies={};
 
-	for(role_id_t in gameinfo.roles)
-	{
-		var role_t=gameinfo.roles[role_id_t];
-		if(neibourids.indexOf(role_t.pos_id)!=-1)
-		{
-			if(gameinfo.players[role_t.uid].group_id!=gameinfo.players[role.uid].group_id)
-			{
-				enemies[role_id_t]=role_t;
-			}
-		}
-		
+	var roles_in_sightzoon=exports.get_roles_in_sightzoon_of_player(role_id,gameinfo);
+	var circle_ids_one=get_circle_ids(gameinfo,role.pos_id,1);
+	var circle_ids_two=get_circle_ids(gameinfo,role.pos_id,2);
+
+	var enemy={
+		type:0,//0无 1贴身 2远程
+		role:null
 	}
 
-	return enemies;
+	var enemies={
+		type:0,//0无 1贴身 2远程
+		roles:[[],[]]
+	}
+
+	for(role_id_t in roles_in_sightzoon)
+	{
+		var role_t=gameinfo.roles[role_id_t];
+		if(gameinfo.players[role_t.uid].group_id=gameinfo.players[role.uid].group_id)
+		{
+			delete roles_in_sightzoon[role_id_t];
+		}
+	}
+
+	for(role_id_t in roles_in_sightzoon)
+	{
+		var role_t=gameinfo.roles[role_id_t];
+		if(circle_ids_one.indexOf(role_t.pos_id)!=-1)
+		{
+			enemies.type=1;
+			if(role_t.taunt==1)
+			{
+				enemies.roles[0].push(role_t);
+			}
+			else
+			{
+				enemies.roles[1].push(role_t);
+			}
+			
+		}
+	}
+
+	if(enemies.type==0)
+	{
+		for(role_id_t in roles_in_sightzoon)
+		{
+			var role_t=gameinfo.roles[role_id_t];
+			if(circle_ids_two.indexOf(role_t.pos_id)!=-1)
+			{
+				enemies.type=2;
+				if(role_t.taunt==1)
+				{
+					enemies.roles[0].push(role_t);
+				}
+				else
+				{
+					enemies.roles[1].push(role_t);
+				}
+			}
+		}
+	}
+
+	for(i in enemies.roles)
+	{
+		if(enemies.roles.length>0)
+		{
+			enemy.type=i+1;
+			enemy.role=enemies.roles[Math.floor(Math.random()*enemies.roles.length)];
+			break;
+		}
+	}
+
+
+	// var neibourids=getneibourids(gametype.width,gametype.height,role.pos_id);
+	// var enemies={};
+
+	// for(role_id_t in gameinfo.roles)
+	// {
+	// 	var role_t=gameinfo.roles[role_id_t];
+	// 	if(neibourids.indexOf(role_t.pos_id)!=-1)
+	// 	{
+	// 		if(gameinfo.players[role_t.uid].group_id!=gameinfo.players[role.uid].group_id)
+	// 		{
+	// 			enemies[role_id_t]=role_t;
+	// 		}
+	// 	}
+		
+	// }
+
+	return enemy;
 }
 
 //role中应该已经添加了first_p和secend_p两个临时变量
@@ -2390,6 +2579,18 @@ exports.fill_retreat_spot=function(role_id,enemies,gameinfo)//game_total_role,ga
 	
 	
 }
+
+
+//随机排序函数
+var get_random=function(a,b)
+{
+	return Math.random()>0.5 ? -1 : 1; 
+}
+
+
+
+
+
 // exports.get_random_pos_id=function(gametype)
 // {
 // 	var pos_ids=[];

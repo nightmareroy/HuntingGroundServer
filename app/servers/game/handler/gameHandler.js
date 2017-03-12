@@ -100,7 +100,7 @@ handler.template=function(msg, session, next)
 	});
 }
 
-//开始游戏, 此时游戏所有玩家应该都在线,只有房主才能执行
+
 handler.SingleGameStart=function(msg,session,next)
 {
 	var uid=session.uid;

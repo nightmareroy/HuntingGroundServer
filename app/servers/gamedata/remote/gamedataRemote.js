@@ -78,32 +78,46 @@ handler.CreateGame=function(gameinfo,cb)
 	{
 		var random_l=Math.random();
 		var random_r=Math.random();
-		if(random_l>0.3)
+		if(random_l>0.4)
 		{
 			//平地
 			gameinfo.map.landform.push(1);
 		}
-		else
+		else if(random_l>0.2)
 		{
-			//山地
+			//丘陵
 			gameinfo.map.landform.push(2);
 		}
+		else
+		{
+			//山脉
+			gameinfo.map.landform.push(3);
+		}
 
-		if(random_r<0.6)
+		if(gameinfo.map.landform[i]!=3)
+		{
+			if(random_r<0.6)
+			{
+				//无资源
+				gameinfo.map.resource.push(1);
+			}
+			else if(random_r<0.8)
+			{
+				//香蕉树
+				gameinfo.map.resource.push(2);
+			}
+			else
+			{
+				//草丛
+				gameinfo.map.resource.push(3);
+			}
+		}
+		else
 		{
 			//无资源
 			gameinfo.map.resource.push(1);
 		}
-		else if(random_r<0.8)
-		{
-			//森林
-			gameinfo.map.resource.push(2);
-		}
-		else
-		{
-			//石头
-			gameinfo.map.resource.push(3);
-		}
+			
 	}
 
 	//roles

@@ -47,7 +47,7 @@ exports.executedirection=function(gameinfo)
 	// var temp_role_list;
 	var role;
 	var next_pos;
-	while(step<8)
+	while(step<6)
 	{
 		step++;
 		// action_list[step]={};
@@ -99,228 +99,112 @@ exports.executedirection=function(gameinfo)
 
 			continue;
 		}
-		else if(step==1||step==2)//||step==3||step==4)
+		else if(step==1)//||step==3||step==4)
 		{
 			//创建位置变化字典
 			for(uid in gameinfo.players)
 			{
-				action_list_dic[uid][step].pos={};
+				// action_list_dic[uid][step].pos={};
+				action_list_dic[uid][step].modifies=[];
 			}
 
-			//只有执行移动指令(direction_did==1)的role才会在这几个回合里行动
 			
 
-			//在所有移动回合开始前，初始化move变量，最后要删掉
-			if(step==1)
+			for(role_id in gameinfo.roles)
 			{
-				for(role_id in gameinfo.roles)
+				role=gameinfo.roles[role_id];
+				if(role.direction_did==1)
 				{
-					role=gameinfo.roles[role_id];
-					if(role.direction_did==1)
-					{
-						var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
-						role.move=role_all_property.max_move;
-						move_roles.push(role_id);
-					}
+					var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
+					role.move=role_all_property.max_move;
+					move_roles.push(role_id);
 				}
 			}
 
-			// for(role_id in gameinfo.roles)
-			// {
-			// 	role=gameinfo.roles[role_id];
-			// 	if(role.move!=undefined)
-			// 	{
-			// 		move_roles.push(role_id);
-			// 	}
-			// }
 
-			gameinfo_sort=gameinfo;
-			move_roles.sort(sort_role);
-			// console.log(move_roles.length)
-
-			for(i in move_roles)
+			var some_role_moved;
+			do
 			{
-				var role_id=move_roles[i];
-				var role=gameinfo.roles[role_id];
 
-				// console.log(role.move)
+				gameinfo_sort=gameinfo;
+				move_roles.sort(sort_role);
 
-				//不在战斗中
-				var enemies=maplib.get_enemies(role.role_id,gameinfo)
-				if(Object.keys(enemies).length==0)
-				{
-					if(role.direction_param.length>0)
-					{
-						next_pos=role.direction_param[0];
-						if(maplib.get_pos_movable(next_pos,gameinfo))
-						{
-							//执行移动
-							next_pos=role.direction_param.shift();
-							maplib.do_role_move(role.role_id,role.pos_id,next_pos,gameinfo);
-						}
-					}
-					
-					
-				}
-			}
-			// console.log("turn")
-			// for(role_id in gameinfo.roles)
-			// {
-			// 	role=gameinfo.roles[role_id];
-			// 	if(role.direction_did==1&&role.direction_param.length>0)
-			// 	{
-			// 		var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
-					
-			// 		switch(role_all_property.current_speed_lv)
-			// 		{
-			// 			case 0:
-			// 				if(step==1)
-			// 				{
-			// 					move_roles[role_all_property.current_speed_lv].push(role);
-			// 				}
-			// 				break;
-			// 			case 1:
-			// 				if(step==1||step==2)
-			// 				{
-			// 					move_roles[role_all_property.current_speed_lv].push(role);
-			// 				}
-			// 				break;
-			// 		}
-
-			// 	}
-
-				
-			// }
-
-			// for(i in move_roles)
-			// {
-			// 	var j=move_roles.length-i-1;
-			// 	//乱序排列
-			// 	move_roles[j].sort(get_random);
-
-
-			// 	while(move_roles[j].length>0)
-			// 	{
-					
-			// 		role=move_roles[j].shift();
-			// 		//不在战斗中
-			// 		var enemies=maplib.get_enemies(role.role_id,gameinfo)
-			// 		if(Object.keys(enemies).length==0)
-			// 		{
-			// 			next_pos=role.direction_param[0];
-			// 			if(maplib.get_pos_movable(next_pos,gameinfo))
-			// 			{
-			// 				//执行移动
-			// 				next_pos=role.direction_param.shift();
-			// 				maplib.do_role_move(role.role_id,next_pos,gameinfo);
-			// 			}
-						
-			// 		}
-
-			// 	}
-			// }
-
-
-
-
-////////////////////////////////////////////////////
-
-			
-
-			
-			// for(uid in gameinfo.players)
-			// {
-			// 	//role变化字典
-			// 	var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);
-			// 	for(i in insight_roles)
-			// 	{
-			// 		var role=gameinfo.roles[insight_roles[i]];
-			// 		action_list_dic[uid][step].pos[role.role_id]=role.pos_id;
-			// 	}
-
-			// 	//新增role字典
-			// 	var add_roles={};
-			// 	for(role_id in action_list_dic[uid][step].pos)
-			// 	{
-			// 		var role=gameinfo.roles[role_id];
-			// 		add_roles[role.role_id]=role;
-			// 	}
-			// 	//删除role字典  列表
-			// 	var delete_roles={};
-			// 	var delete_roles_list=[];
-			// 	for(role_id in action_list_dic[uid][step-1].pos)
-			// 	{
-			// 		var role=gameinfo.roles[role_id];
-			// 		delete_roles[role.role_id]=role;
-			// 	}
-			// 	for(role_id in add_roles)
-			// 	{
-			// 		if(delete_roles[role_id]!=undefined)
-			// 		{
-			// 			delete add_roles[role_id];
-			// 			delete delete_roles[role_id];
-			// 		}
-			// 	}
-			// 	action_list_dic[uid][step].add_roles=add_roles;
-			// 	for(role_id in delete_roles)
-			// 	{
-			// 		var role_id_i=parseInt(role_id);
-			// 		delete_roles_list.push(role_id_i);
-			// 	}
-			// 	action_list_dic[uid][step].delete_roles=delete_roles_list;
-
-
-
-			// 	//地图变化字典
-			// 	action_list_dic[uid][step].landform_map={};
-			// 	action_list_dic[uid][step].resource_map={};
-			// 	var sightzoon=maplib.getsightzoon_of_player(uid,gameinfo);
-			// 	for(id in sightzoon)
-			// 	{
-			// 		var zoon_id=sightzoon[id];
-			// 		// action_list_dic[uid][step].landform_map[zoon_id]=gameinfo.map.landform[zoon_id]*gameinfo.players[uid].map[zoon_id];
-			// 		// action_list_dic[uid][step].resource_map[zoon_id]=gameinfo.map.resource[zoon_id]*gameinfo.players[uid].map[zoon_id];
-			// 		action_list_dic[uid][step].landform_map[zoon_id]=gameinfo.map.landform[zoon_id];
-			// 		action_list_dic[uid][step].resource_map[zoon_id]=gameinfo.map.resource[zoon_id];
-
-			// 		gameinfo.players[uid].map.landform[zoon_id]=gameinfo.map.landform[zoon_id];
-			// 		gameinfo.players[uid].map.resource[zoon_id]=gameinfo.map.resource[zoon_id];
-			// 	}
-
-			// 	//building变化字典
-			// 	action_list_dic[uid][step].buildings=maplib.get_buildings_modefied_of_player(uid,gameinfo);
-			// }
-			var modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][step-1]);
-			for(uid in gameinfo.players)
-			{
-				action_list_dic[uid][step]=modefied_dic[uid];
-			}
-
-
-
-			if(step==2)
-			{
+				some_role_moved=false;
 				for(i in move_roles)
 				{
 					var role_id=move_roles[i];
 					var role=gameinfo.roles[role_id];
-					delete role.move;
+
+					// console.log(role.move)
+
+					//不在战斗中
+					var enemies=maplib.get_enemies(role.role_id,gameinfo)
+					if(Object.keys(enemies).length==0)
+					{
+						if(role.direction_param.length>0)
+						{
+							next_pos=role.direction_param[0];
+							if(maplib.get_pos_movable(next_pos,gameinfo))
+							{
+								//执行移动
+								next_pos=role.direction_param.shift();
+								if(maplib.do_role_move(role.role_id,role.pos_id,next_pos,gameinfo))
+								{
+									some_role_moved=true;
+								}
+								
+							}
+						}
+						
+						
+					}
 				}
+
+				if(some_role_moved)
+				{
+					var modefied_dic;
+					if(step==1)
+					{
+						modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][0]);
+					}
+					else
+					{
+						var modifies_length=action_list_dic[uid].modifies.length;
+						modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid].modifies[modifies_length-1]);
+					}
+					
+					for(uid in gameinfo.players)
+					{
+						action_list_dic[uid][step].modifies.push(modefied_dic[uid]);
+					}
+				}
+				
+
+
+			}while(some_role_moved)
+			
+			for(i in move_roles)
+			{
+				var role_id=move_roles[i];
+				var role=gameinfo.roles[role_id];
+				delete role.move;
 			}
+
+
 
 			
 		}
-		else if(step==3)
+		else if(step==2)
 		{
 			//执行攻击
 			for(role_id in gameinfo.roles)
 			{
 				var role=gameinfo.roles[role_id];
-				var enemies=maplib.get_enemies(role_id,gameinfo);
+				var enemy=maplib.get_enemies(role_id,gameinfo);
 				
 				//新添加两个临时变量，攻击回合结束时要删除
 				// role.enemy_count= Object.keys(enemies).length;
-				role.enemies=enemies;
+				role.enemy=enemy;
 				role.all_damage=0;
 				
 			}
@@ -329,48 +213,75 @@ exports.executedirection=function(gameinfo)
 				var role=gameinfo.roles[role_id];
 				var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
 				// var enemies=maplib.get_enemies(role_id,gameinfo);
-				
-				for(enemy_role_id in role.enemies)
-				{
-					var enemy=role.enemies[enemy_role_id];
-					var enemy_all_property=rolelib.get_role_all_property(enemy.role_id,gameinfo);
-					role.all_damage+=(enemy_all_property.muscle*enemy_all_property.health)/role_all_property.weight/Object.keys(enemy.enemies).length;
-				}
-				// role.blood_sugar*=1-role.all_damage;
-				// console.log(gameinfo.roles);
-				role.all_damage_int=Math.round(role.blood_sugar*role.all_damage);
 
-				if(role.all_damage_int>role.blood_sugar)
+				role.enemy.role.all_damage+=enemy_all_property.muscle*enemy_all_property.muscle/enemy_all_property.weight*(role.weapon_type_id==0?1:1.2);
+				if(role.all_damage>role.blood_sugar)
 				{
-					role.all_damage_int=role.blood_sugar;
+					role.all_damage=role.blood_sugar;
 				}
 
-				role.blood_sugar=role.blood_sugar-role.all_damage_int;
+				// for(enemy_role_id in role.enemies)
+				// {
+				// 	var enemy=role.enemies[enemy_role_id];
+				// 	var enemy_all_property=rolelib.get_role_all_property(enemy.role_id,gameinfo);
+				// 	role.all_damage+=(enemy_all_property.muscle*enemy_all_property.health)/role_all_property.weight/Object.keys(enemy.enemies).length;
+				// }
 
-				// console.log(gameinfo.roles);
-				delete role.all_damage;
-				delete role.enemies;
+				// role.all_damage_int=Math.round(role.blood_sugar*role.all_damage);
+
+				// if(role.all_damage_int>role.blood_sugar)
+				// {
+				// 	role.all_damage_int=role.blood_sugar;
+				// }
+
+				// role.blood_sugar=role.blood_sugar-role.all_damage_int;
+
+				// delete role.all_damage;
+				// delete role.enemies;
 			}
+
+			for(role_id in gameinfo.roles)
+			{
+				var role=gameinfo.roles[role_id];
+				role.all_damage=Math.floor(role.all_damage);
+				role.blood_sugar=role.blood_sugar-role.all_damage;
+			}
+
+
 			
 
 			//写入发送数据
 			for(uid in gameinfo.players)
 			{
 				action_list_dic[uid][step].damage={};
+				action_list_dic[uid][step].attack={};
 				var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);
 				for(i in insight_roles)
 				{
 					var role=gameinfo.roles[insight_roles[i]];
 					if(role.all_damage>0)
 					{
-						action_list_dic[uid][step].damage[role.role_id]=role.all_damage_int;
+						action_list_dic[uid][step].damage[role.role_id]=role.all_damage;
 						
 					}
+					if(role.enemy.type!=0)
+					{
+						action_list_dic[uid][step].attack[role.role_id]={
+							type:role.enemy.type,
+							enemy_id:role.enemy.role.role_id
+						}
+					}
+					
 					
 				}
 			}
 
-			
+			for(role_id in gameinfo.roles)
+			{
+				var role=gameinfo.roles[role_id];
+				delete role.all_damage;
+				delete role.enemy;
+			}
 			
 
 			
@@ -379,7 +290,7 @@ exports.executedirection=function(gameinfo)
 		}
 
 		//删除blood_sugar为0的角色
-		else if(step==4)
+		else if(step==3)
 		{
 			for(role_id in gameinfo.roles)
 			{
@@ -398,8 +309,8 @@ exports.executedirection=function(gameinfo)
 			// 	delete role.all_damage_int;
 			// }
 
-
-			var modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][2]);
+			var modifies_length=action_list_dic[uid][1].modifies.length;
+			var modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][1].modifies[modifies_length-1]);
 			for(uid in gameinfo.players)
 			{
 				action_list_dic[uid][step]=modefied_dic[uid];
@@ -410,93 +321,8 @@ exports.executedirection=function(gameinfo)
 
 
 
-		else if(step==5)
-		{
-			//执行撤退
-
-
-			//向撤退的role中添加最优撤退点及次优撤退点
-			var retreating_roles={};
-			for(role_id in gameinfo.roles)
-			{
-				var role=gameinfo.roles[role_id];
-				var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
-				if(1-role_all_property.health>role_all_property.courage)
-				{
-					retreating_roles[role_id]=role;
-					//添加量个临时变量
-					role.first_p=[];
-					role.secend_p=[];
-
-					//添加一个临时变量
-					role.moved=true;
-
-					var enemies=maplib.get_enemies(role.role_id,gameinfo)
-					maplib.fill_retreat_spot(role.role_id,enemies,gameinfo);
-				}
-				else
-				{
-					role.moved=false;
-				}
-			}
-			// console.log('gameinfo.roles')
-			// console.log(gameinfo.roles)
-			// console.log('retreating_roles')
-			// console.log(retreating_roles)
-			for(role_id in retreating_roles)
-			{
-				var role=retreating_roles[role_id];
-				for(i in role.first_p)
-				{
-					var pos_id=role.first_p[i];
-					if(maplib.get_pos_movable(pos_id,gameinfo))
-					{
-						maplib.do_role_move(role_id,pos_id,gameinfo);
-						delete role.first_p;
-						delete role.secend_p;
-						delete retreating_roles[role_id];
-						break;
-					}
-				}
-			}
-			// console.log('gameinfo.roles')
-			// console.log(gameinfo.roles)
-			// console.log('retreating_roles')
-			// console.log(retreating_roles)
-			for(role_id in retreating_roles)
-			{
-				var role=retreating_roles[role_id];
-				for(i in role.secend_p)
-				{
-					var pos_id=role.first_p[i];
-					if(maplib.get_pos_movable(pos_id,gameinfo))
-					{
-						maplib.do_role_move(role_id,pos_id,gameinfo);
-						delete role.first_p;
-						delete role.secend_p;
-						delete retreating_roles[role_id];
-						break;
-					}
-				}
-			}
-
-			for(role_id in retreating_roles)
-			{
-				var role=retreating_roles[role_id];
-				delete role.first_p;
-				delete role.secend_p;
-				delete retreating_roles[role_id];
-			}
-
-			var modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][4]);
-			for(uid in gameinfo.players)
-			{
-				action_list_dic[uid][step]=modefied_dic[uid];
-			}
-
-			continue;
-		}
-		else if(step==6)
+		
+		else if(step==4)
 		{
 			//回血
 			for(role_id in gameinfo.roles)
@@ -540,7 +366,7 @@ exports.executedirection=function(gameinfo)
 		//改变地形、资源，建造建筑，进食
 		//特殊指令分两步进行，先执行造成视野变化的部分，再执行不造成视野变化的部分
 		//视野变化部分
-		else if(step==7)
+		else if(step==5)
 		{
 
 			for(role_id in gameinfo.roles)
@@ -645,8 +471,8 @@ exports.executedirection=function(gameinfo)
 
 
 
-
-			var modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][5]);
+			
+			var modefied_dic=gen_modefied_dic(gameinfo,action_list_dic[uid][3]);
 			// console.log(modefied_dic)
 			for(uid in gameinfo.players)
 			{
@@ -671,7 +497,7 @@ exports.executedirection=function(gameinfo)
 
 
 		//不造成角色、建筑、视野变化的指令
-		else if(step==8)
+		else if(step==6)
 		{
 			
 			for(role_id in gameinfo.roles)

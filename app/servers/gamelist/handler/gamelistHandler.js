@@ -104,8 +104,8 @@ handler.CancelOrLeaveMultiGame=function(msg,session,next)
 	
 
 	funcs.push((cb)=>{
-		this.app.rpc.gamelist.gamelistRemote.onCancelOrLeaveMultiGame(session,session.get('creator_id'),session.uid,()=>{
-			cb();
+		this.app.rpc.gamelist.gamelistRemote.onCancelOrLeaveMultiGame(session,session.uid,(err)=>{
+			cb(err);
 		});
 	});
 

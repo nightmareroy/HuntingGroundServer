@@ -497,8 +497,10 @@ GamelistRemote.prototype.onLeaveMultiGame = function(creator_id,uid,cb)
 
 
 //注销或离开游戏
-GamelistRemote.prototype.onCancelOrLeaveMultiGame = function(creator_id,uid,cb)
-{
+GamelistRemote.prototype.onCancelOrLeaveMultiGame = function(uid,cb)
+{console.log(gamedic);
+	var creator_id=user_creator_dic[uid];
+	console.log(creator_id);
 	if(gamedic[creator_id]==undefined)
 	{
 		cb('the game does not exist!');
