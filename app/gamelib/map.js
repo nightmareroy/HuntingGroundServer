@@ -157,9 +157,9 @@ var get_circle_ids=function(gameinfo,pos_id,circle_id)
 		var xx=xy.x+circle_ids_dic[circle_id][i][0];
 		var yy=xy.y+circle_ids_dic[circle_id][i][1];
 
-		if(xx>=0&&xx<width&&yy>=0&&yy<height)
+		if(xx>=0&&xx<gametype.width&&yy>=0&&yy<gametype.height)
 		{
-			result.push(getid(width,xx,yy));
+			result.push(getid(gametype.width,xx,yy));
 		}
 	}
 	return result;
@@ -2155,18 +2155,19 @@ exports.getsightzoon_of_player=function(uid,gameinfo)//game_total_role,game_tota
 	var landform_map=gameinfo.map.landform;
 	var resource_map=gameinfo.map.resource;
 	var sightzoon=[];
-	var role;
+	// var role;
 	var temp_zoon;
 	for(role_id in gameinfo.roles)
 	{
-
-		role=gameinfo.roles[role_id];
+		
+		var role=gameinfo.roles[role_id];
 		if(role.uid==uid)
 		{
 			temp_zoon=exports.getsightzoon_of_role(role_id,gameinfo)//_total_role,game_total_map,gametype);
-			// console.log(temp_zoon);
 			for(i in temp_zoon)
 			{
+				// console.log('sightzoon.indexOf(temp_zoon[i])');
+				// console.log(sightzoon.indexOf(temp_zoon[i]));
 				if(sightzoon.indexOf(temp_zoon[i])==-1)
 				{
 					sightzoon.push(temp_zoon[i]);
@@ -2177,8 +2178,8 @@ exports.getsightzoon_of_player=function(uid,gameinfo)//game_total_role,game_tota
 
 	for(building_id in gameinfo.buildings)
 	{
-		building=gameinfo.buildings[building_id];
-		if(role.uid==uid)
+		var building=gameinfo.buildings[building_id];
+		if(building.uid==uid)
 		{
 			temp_zoon=exports.getsightzoon_of_building(building_id,gameinfo)//_total_role,game_total_map,gametype);
 			// console.log(temp_zoon);
@@ -2191,7 +2192,6 @@ exports.getsightzoon_of_player=function(uid,gameinfo)//game_total_role,game_tota
 			}
 		}
 	}
-
 	return sightzoon;
 }
 
@@ -2202,12 +2202,14 @@ exports.get_roles_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role
 
 	var roles={};
 	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
-	// console.log(sightzoon)
+
+	
 	for(role_id in gameinfo.roles)
 	{
 		var role=gameinfo.roles[role_id];
 		if(sightzoon.indexOf(role.pos_id)!=-1)
 		{
+
 			if(resource_map[role.pos_id]==3)
 			{
 				var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
@@ -2250,27 +2252,35 @@ exports.get_roles_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role
 	return roles;
 }
 
-// exports.get_role_ids_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
-// {
-// 	var landform_map=gameinfo.map.landform;
-// 	var resource_map=gameinfo.map.resource;
+exports.get_role_ids_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role,game_total_map,gametype)
+{
+	// var landform_map=gameinfo.map.landform;
+	// var resource_map=gameinfo.map.resource;
 
 	
-// 	var role_ids=[];
-// 	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
+	// var role_ids=[];
+	// var sightzoon=exports.getsightzoon_of_player(uid,gameinfo)//game_total_role,game_total_map,gametype);
 
-// 	for(role_id in gameinfo.roles)
-// 	{
-// 		var role=gameinfo.roles[role_id];
-// 		if(sightzoon.indexOf(role.pos_id)!=-1)
-// 		{
-// 			role_ids.push(role.role_id);
-// 		}
+	// for(role_id in gameinfo.roles)
+	// {
+	// 	var role=gameinfo.roles[role_id];
+	// 	if(sightzoon.indexOf(role.pos_id)!=-1)
+	// 	{
+	// 		role_ids.push(role.role_id);
+	// 	}
 		
-// 	}
+	// }
 
-// 	return role_ids;
-// }
+	// return role_ids;
+	var result=[];
+	var roles=exports.get_roles_in_sightzoon_of_player(uid,gameinfo);
+	for(role_id in roles)
+	{
+		result.push(role_id);
+	}
+	return result;
+
+}
 
 // exports.get_buildings_of_player=function(uid,gameinfo)
 // {
@@ -2292,24 +2302,24 @@ exports.get_roles_in_sightzoon_of_player=function(uid,gameinfo)//game_total_role
 // 	return buildings;
 // }
 
-// exports.get_buildings_in_sightzoon_of_player=function(uid,gameinfo)
-// {
-// 	var landform_map=gameinfo.map.landform;
-// 	var resource_map=gameinfo.map.resource;
+exports.get_buildings_in_sightzoon_of_player=function(uid,gameinfo)
+{
+	var landform_map=gameinfo.map.landform;
+	var resource_map=gameinfo.map.resource;
 
-// 	var buildings={};
-// 	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo);
-// 	for(building_id in gameinfo.buildings)
-// 	{
-// 		var building=gameinfo.buildings[building_id];
-// 		if(sightzoon.indexOf(building.pos_id)!=-1)
-// 		{
-// 			buildings[building.building_id]=building;
-// 		}
+	var buildings={};
+	var sightzoon=exports.getsightzoon_of_player(uid,gameinfo);
+	for(building_id in gameinfo.buildings)
+	{
+		var building=gameinfo.buildings[building_id];
+		if(sightzoon.indexOf(building.pos_id)!=-1)
+		{
+			buildings[building.building_id]=building;
+		}
 		
-// 	}
-// 	return buildings;
-// }
+	}
+	return buildings;
+}
 
 //只算增删改动，不算building属性的改动,并将改动写入user_building数据中
 exports.get_buildings_modefied_of_player=function(uid,gameinfo)
@@ -2389,7 +2399,13 @@ exports.get_buildings_modefied_of_player=function(uid,gameinfo)
 
 exports.get_pos_movable=function(pos_id,gameinfo)
 {
+	if(gameinfo.map.landform[pos_id]==3)
+	{
+		return false;
+	}
+
 	var movable=true;
+
 	for(role_id in gameinfo.roles)
 	{
 		var role=gameinfo.roles[role_id];
@@ -2410,9 +2426,10 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 	var landform_source=defaultDataManager.get_d_landform(gameinfo.map.landform[source_pos_id]);
 	var landform_next=defaultDataManager.get_d_landform(gameinfo.map.landform[next_pos_id]);
-	var cost=landform_source.cost+landform_next.cost;
+	var cost=landform_next.cost;
 
 	var role=gameinfo.roles[role_id];
+	
 	if(role.move>=cost&&landform_next.cost>0)
 	{
 		role.pos_id=next_pos_id;
@@ -2424,6 +2441,7 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 			// gameinfo.players[gameinfo.roles[role_id].uid].map[pos_id_t]=1;
 			gameinfo.players[gameinfo.roles[role_id].uid].map.landform[pos_id_t]=gameinfo.map.landform[pos_id_t];
 			gameinfo.players[gameinfo.roles[role_id].uid].map.resource[pos_id_t]=gameinfo.map.resource[pos_id_t];
+			gameinfo.players[gameinfo.roles[role_id].uid].map.meat[pos_id_t]=gameinfo.map.meat[pos_id_t];
 		}
 		return true;
 	}
@@ -2445,80 +2463,104 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 
 
 
-exports.get_enemy=function(role_id,gameinfo)//game_total_role,game_total_player,gametype)
+exports.get_enemies=function(role_id,gameinfo)//game_total_role,game_total_player,gametype)
 {
 	// console.log(role_id)
 	// console.log(gameinfo)
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 	var role=gameinfo.roles[role_id];
 
-	var roles_in_sightzoon=exports.get_roles_in_sightzoon_of_player(role_id,gameinfo);
-	var circle_ids_one=get_circle_ids(gameinfo,role.pos_id,1);
-	var circle_ids_two=get_circle_ids(gameinfo,role.pos_id,2);
-
-	var enemy={
-		type:0,//0无 1贴身 2远程
-		role:null
-	}
 
 	var enemies={
-		type:0,//0无 1贴身 2远程
+		type:0,//0无 1贴身 2远程 3近身所有
+		roles:[]
+	}
+
+	var temp_enemies={
+		type:0,//0无 1贴身 2远程 3近身所有
 		roles:[[],[]]
 	}
 
+
+	if(role.direction_did!=1)
+	{
+		return enemies;
+	}
+
+	var roles_in_sightzoon=exports.get_roles_in_sightzoon_of_player(role.uid,gameinfo);
+	var circle_ids_one=get_circle_ids(gameinfo,role.pos_id,1);
+	var circle_ids_two=get_circle_ids(gameinfo,role.pos_id,2);
+
+	
+
+	
 	for(role_id_t in roles_in_sightzoon)
 	{
 		var role_t=gameinfo.roles[role_id_t];
-		if(gameinfo.players[role_t.uid].group_id=gameinfo.players[role.uid].group_id)
+		if(gameinfo.players[role_t.uid].group_id==gameinfo.players[role.uid].group_id)
 		{
 			delete roles_in_sightzoon[role_id_t];
 		}
 	}
 
+	//查找近身敌人
 	for(role_id_t in roles_in_sightzoon)
 	{
 		var role_t=gameinfo.roles[role_id_t];
 		if(circle_ids_one.indexOf(role_t.pos_id)!=-1)
 		{
-			enemies.type=1;
+			temp_enemies.type=1;
 			if(role_t.taunt==1)
 			{
-				enemies.roles[0].push(role_t);
+				temp_enemies.roles[0].push(role_t);
 			}
 			else
 			{
-				enemies.roles[1].push(role_t);
+				temp_enemies.roles[1].push(role_t);
 			}
 			
 		}
 	}
 
-	if(enemies.type==0)
+	//查找远程敌人
+	if(temp_enemies.type==0&&role.weapon_type_id==2)
 	{
 		for(role_id_t in roles_in_sightzoon)
 		{
 			var role_t=gameinfo.roles[role_id_t];
 			if(circle_ids_two.indexOf(role_t.pos_id)!=-1)
 			{
-				enemies.type=2;
+				temp_enemies.type=2;
 				if(role_t.taunt==1)
 				{
-					enemies.roles[0].push(role_t);
+					temp_enemies.roles[0].push(role_t);
 				}
 				else
 				{
-					enemies.roles[1].push(role_t);
+					temp_enemies.roles[1].push(role_t);
 				}
 			}
 		}
 	}
 
-	for(i in enemies.roles)
+	for(i in temp_enemies.roles)
 	{
-		if(enemies.roles.length>0)
+		i=parseInt(i)
+		if(temp_enemies.roles[i].length>0)
 		{
-			enemy.type=i+1;
-			enemy.role=enemies.roles[Math.floor(Math.random()*enemies.roles.length)];
+			if(i==0&&gameinfo.roles[role_id].brandish==1)
+			{
+				enemies.type=3;
+				enemies.roles=[0];
+			}
+			else
+			{
+				enemies.type=i+1;
+				// console.log(Math.random()*temp_enemies.roles[i].length)
+				// console.log(temp_enemies.roles[i])
+				enemies.roles=[temp_enemies.roles[i][Math.floor(Math.random()*temp_enemies.roles[i].length)]];
+			}
+			
 			break;
 		}
 	}
@@ -2540,7 +2582,26 @@ exports.get_enemy=function(role_id,gameinfo)//game_total_role,game_total_player,
 		
 	// }
 
-	return enemy;
+	return enemies;
+}
+
+//包括自己
+exports.get_neibour_role_ids=function(gameinfo,role_id)
+{
+	var result=[];
+	var role=gameinfo.roles[role_id];
+
+	result.push(role_id);
+	var circle_ids=get_circle_ids(gameinfo,role.pos_id,1);
+	for(role_id_t in gameinfo.roles)
+	{
+		var role_t=gameinfo.roles[role_id_t];
+		if(circle_ids.indexOf(role_t.pos_id)!=-1)
+		{
+			result.push(role_id_t);
+		}
+	}
+	return result;
 }
 
 //role中应该已经添加了first_p和secend_p两个临时变量
@@ -2613,5 +2674,81 @@ var get_random=function(a,b)
 // }
 
 
+var get_distance=function(gameinfo,pos_id_a,pos_id_b)
+{
+	// console.log(pos_id_a==pos_id_b)
+	if(pos_id_a==pos_id_b)
+	{
+		return 0;
+	}
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var distance=0;
 
+	var b_x=pos_id_b%gametype.width;
+	var b_y=Math.floor(pos_id_b/gametype.width);
+
+	var nearist_distance;
+	var nearist_pos_id=pos_id_a;
+
+	do{
+		var neibourids=getneibourids(gametype.width,gametype.height,nearist_pos_id);
+		// console.log(neibourids)
+		for(i in neibourids)
+		{
+			var neibour_pos_id=neibourids[i];
+			var neibour_x=neibour_pos_id%gametype.width;
+			var neibour_y=Math.floor(neibour_pos_id/gametype.width);
+
+			var temp_distance=Math.abs(b_x-neibour_x)+Math.abs(b_y-neibour_y);
+			// console.log(temp_distance)
+			if(nearist_distance==undefined)
+			{
+				nearist_distance=temp_distance;
+				nearist_pos_id=neibour_pos_id;
+			}
+			else if(temp_distance<nearist_distance)
+			{
+				nearist_distance=temp_distance;
+				nearist_pos_id=neibour_pos_id;
+			}
+				
+
+		}
+		distance++;
+
+	}while(nearist_distance>0)
+	// console.log(distance)
+	return distance;
+
+}
+
+exports.get_nearist_home_distance=function(gameinfo,uid,pos_id)
+{
+	var distance=-1;
+	// console.log(gameinfo.buildings)
+	for(building_id in gameinfo.buildings)
+	{
+		// console.log('e')
+		var building=gameinfo.buildings[building_id];
+		// console.log(building)
+		if(building.building_did==1&&building.uid==uid)//树窝
+		{
+			var temp_distance=get_distance(gameinfo,pos_id,building.pos_id);
+			
+			if(distance==-1)
+			{
+				distance=temp_distance;
+			}
+			else if(temp_distance<distance)
+			{
+				distance=temp_distance;
+			}
+		}
+	}
+
+	// console.log(distance)
+	return distance;
+}
+
+// var get_distance=function(width,)
 

@@ -20,12 +20,15 @@ var d_direction={};
 // var d_role_direction={};
 var d_landform={};
 var d_resource={};
+var d_meat={};
 var d_banana_value={};
 var d_single_game_info={};
 var d_role_init_property={};
 var d_building_init_property={};
 // var d_building_direction={};
-var d_names={}
+var d_names={};
+var d_cook_skill={};
+var d_food={};
 
 exports.init=function(write)
 {
@@ -66,7 +69,9 @@ exports.init=function(write)
 			{
 				for(i in rows)
 				{
-					d_skill[rows[i].skill_did]=rows[i];
+					d_skill[rows[i].skill_id]=rows[i];
+					d_skill[rows[i].skill_id].properties=JSON.parse(d_skill[rows[i].skill_id].properties);
+					d_skill[rows[i].skill_id].params=JSON.parse(d_skill[rows[i].skill_id].params);
 				}
 				if(write)
 				{
@@ -154,17 +159,24 @@ exports.init=function(write)
 			{
 				for(i in rows)
 				{
+					// var direction=rows[i];
+					// d_direction[direction.direction_did]={};
+					// d_direction[direction.direction_did].direction_did=direction.direction_did;
+					// d_direction[direction.direction_did].name=direction.name;
+					// d_direction[direction.direction_did].role_did=JSON.parse(direction.role_did);
+					// d_direction[direction.direction_did].building_did=JSON.parse(direction.building_did);
+					// d_direction[direction.direction_did].building_uid=direction.building_uid;
+					// d_direction[direction.direction_did].building_group=direction.building_group;
+					// d_direction[direction.direction_did].landform=JSON.parse(direction.landform);
+					// d_direction[direction.direction_did].resource=JSON.parse(direction.resource);
+					// d_direction[direction.direction_did].hide=direction.hide;
 					var direction=rows[i];
-					d_direction[direction.direction_did]={};
-					d_direction[direction.direction_did].direction_did=direction.direction_did;
-					d_direction[direction.direction_did].name=direction.name;
-					d_direction[direction.direction_did].role_did=JSON.parse(direction.role_did);
-					d_direction[direction.direction_did].building_did=JSON.parse(direction.building_did);
-					d_direction[direction.direction_did].building_uid=direction.building_uid;
-					d_direction[direction.direction_did].building_group=direction.building_group;
-					d_direction[direction.direction_did].landform=JSON.parse(direction.landform);
-					d_direction[direction.direction_did].resource=JSON.parse(direction.resource);
-					d_direction[direction.direction_did].hide=direction.hide;
+					direction.role_did=JSON.parse(direction.role_did);
+					direction.building_did=JSON.parse(direction.building_did);
+					direction.landform=JSON.parse(direction.landform);
+					direction.resource=JSON.parse(direction.resource);
+					direction.meat=JSON.parse(direction.meat);
+					d_direction[direction.direction_did]=direction;
 
 
 				}
@@ -199,7 +211,7 @@ exports.init=function(write)
 	// 				{
 	// 					d_role_skill[rows[i].role_did]=[];
 	// 				}
-	// 				d_role_skill[rows[i].role_did].push(rows[i].skill_did);
+	// 				d_role_skill[rows[i].role_did].push(rows[i].skill_id);
 	// 				// d_role_init_skill[rows[i].role_did].skillid_list=JSON.parse(d_roleinitskill[rows[i].role_did].skillid_list);
 	// 			}
 	// 			if(write)
@@ -310,6 +322,35 @@ exports.init=function(write)
 		});
 	});
 	funcs.push((cb)=>{
+		sql="select * from meat";
+		connection.query(sql,null,(err,rows)=>{
+			if(err)
+			{
+				cb(err);
+			}
+			else
+			{
+				for(i in rows)
+				{
+					d_meat[rows[i].meat_id]=rows[i];
+				}
+				if(write)
+				{
+					var str=JSON.stringify(d_meat);
+					fs.writeFile('app/defaultdata/alldata/defaultdata/DMeat.txt',str,(err_fs,data_fs)=>{
+						datalist.DMeat=md5.md5(str);
+						cb(err_fs);
+					});
+				}
+				else
+				{
+					cb();
+				}
+				
+			}
+		});
+	});
+	funcs.push((cb)=>{
 		sql="select * from banana_value";
 		connection.query(sql,null,(err,rows)=>{
 			if(err)
@@ -379,7 +420,8 @@ exports.init=function(write)
 				for(i in rows)
 				{
 					d_role_init_property[rows[i].role_did]=rows[i];
-					d_role_init_property[rows[i].role_did].skill_did_list=JSON.parse(d_role_init_property[rows[i].role_did].skill_did_list);
+					d_role_init_property[rows[i].role_did].skill_id_list=JSON.parse(d_role_init_property[rows[i].role_did].skill_id_list);
+					d_role_init_property[rows[i].role_did].cook_skill_id_list=JSON.parse(d_role_init_property[rows[i].role_did].cook_skill_id_list);
 				}
 				if(write)
 				{
@@ -491,6 +533,72 @@ exports.init=function(write)
 		});
 	});
 
+	funcs.push((cb)=>{
+		sql="select * from cook_skill";
+		connection.query(sql,null,(err,rows)=>{
+			if(err)
+			{
+				cb(err);
+			}
+			else
+			{
+				for(i in rows)
+				{
+					d_cook_skill[rows[i].cook_skill_id]=rows[i];
+					// d_cook_method[rows[i].cook_method_id].method_need_list=JSON.parse(d_cook_method[rows[i].cook_method_id].method_need_list);
+				}
+				if(write)
+				{
+					var str=JSON.stringify(d_cook_skill);
+					fs.writeFile('app/defaultdata/alldata/defaultdata/DCookSkill.txt',str,(err_fs,data_fs)=>{
+						datalist.DCookSkill=md5.md5(str);
+						cb(err_fs);
+					});
+				}
+				else
+				{
+					cb();
+				}
+				
+			}
+		});
+	});
+
+	funcs.push((cb)=>{
+		sql="select * from food";
+		connection.query(sql,null,(err,rows)=>{
+			if(err)
+			{
+				cb(err);
+			}
+			else
+			{
+				for(i in rows)
+				{
+					d_food[rows[i].food_id]=rows[i];
+					d_food[rows[i].food_id].cook_skills_need=JSON.parse(d_food[rows[i].food_id].cook_skills_need);
+					d_food[rows[i].food_id].inspire_skill_properties=JSON.parse(d_food[rows[i].food_id].inspire_skill_properties);
+					d_food[rows[i].food_id].inspire_skill_values=JSON.parse(d_food[rows[i].food_id].inspire_skill_values);
+				}
+				if(write)
+				{
+					var str=JSON.stringify(d_food);
+					fs.writeFile('app/defaultdata/alldata/defaultdata/DFood.txt',str,(err_fs,data_fs)=>{
+						datalist.DFood=md5.md5(str);
+						cb(err_fs);
+					});
+				}
+				else
+				{
+					cb();
+				}
+				
+			}
+		});
+	});
+
+
+
 
 	funcs.push((cb)=>{
 		if(write)
@@ -538,9 +646,9 @@ exports.get_d_role=function(role_did)
 	return d_role[role_did];
 }
 
-exports.get_d_skill=function(skill_did)
+exports.get_d_skill=function(skill_id)
 {
-	return d_skill[skill_did];
+	return d_skill[skill_id];
 }
 
 exports.get_d_building=function(building_did)
@@ -578,6 +686,11 @@ exports.get_d_resource=function(resource_id)
 	return d_resource[resource_id];
 }
 
+exports.get_d_meat=function(meat_id)
+{
+	return d_meat[meat_id];
+}
+
 exports.get_d_banana_value=function(monkey_lv)
 {
 	return d_banana_value[monkey_lv];
@@ -605,7 +718,20 @@ exports.get_d_names_dic=function()
 	return d_names;
 }
 
+exports.get_d_cook_skill=function(cook_skill_id)
+{
+	return d_cook_skill[cook_skill_id];
+}
 
+// exports.get_d_cook_skills=function()
+// {
+// 	return d_cook_skill;
+// }
+
+exports.get_d_food=function(food_id)
+{
+	return d_food[food_id];
+}
 
 
 

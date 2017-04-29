@@ -152,10 +152,14 @@ handler.login = function(msg, session, next) {
 	funcs.push((cb)=>{
 		session.bind(user.uid);
 		session.on('closed', onLeaveGame.bind(null, this.app));
-		// console.log('session id::::::'+session.id);
+		// console.log(null==undefined);
 		//sid
 		session.set('sid', this.app.get('serverId'));
 		session.set('user_name',user.name);
+		session.set('creator_id',-1);
+		session.set('gamedata_sid',-1);
+		session.set('gamechannel_sid',-1);
+		session.set('actived_food_ids',JSON.parse(user.actived_food_ids));
 		session.pushAll((err)=>{
 			cb(err)
 			// if(err) {
@@ -163,6 +167,14 @@ handler.login = function(msg, session, next) {
 			// 	cb('set sid for session service failed!');
 			// }
 		});
+
+	});
+
+	funcs.push((cb)=>{
+
+		this.app.rpc.friend.friendRemote.EnterChannel(session,session.frontendId,user.uid,()=>{
+			cb();
+		})
 
 	});
 
@@ -222,7 +234,8 @@ var onLeaveGame=function(app,session)
 	}
 	// var gameid=session.get('gameid');
 
-	
+	app.rpc.friend.friendRemote.LeaveChannel(session,session.frontendId,session.uid,()=>{
+	})
 	
 	
 	
@@ -232,12 +245,13 @@ var onLeaveGame=function(app,session)
 	});
 
 	//删除gamedata和channel数据
-	console.log('call leave');
+	console.log('user:'+session.uid+' leave');
+	// console.log(session.get('test'));
 	// console.log(session.get('creator_id'));
 	var	creator_id=session.get('creator_id');
 	var gamedata_sid=session.get('gamedata_sid');
 	var gamechannel_sid=session.get('gamechannel_sid');
-	if(creator_id!=undefined)
+	if(creator_id!=-1)
 	{
 		app.rpc.game.gameRemote.OnUserLeave(session, creator_id,gamedata_sid,gamechannel_sid,session.uid,(err)=>{
 		});

@@ -330,7 +330,7 @@ GamelistRemote.prototype.MultiGameStart = function(creator_id,gamedata_sid,gamec
 
 
 //创建游戏
-GamelistRemote.prototype.onCreateMultiGame = function(uid,name,game_name,gametype_id,group_id,cb)
+GamelistRemote.prototype.onCreateMultiGame = function(uid,name,game_name,gametype_id,group_id,actived_food_ids,cb)
 {
 	if(gamedic[uid]!=undefined)
 	{
@@ -350,7 +350,8 @@ GamelistRemote.prototype.onCreateMultiGame = function(uid,name,game_name,gametyp
 	gamedic[uid].players[uid]={
 		uid:uid,
 		name:name,
-		group_id:group_id
+		group_id:group_id,
+		actived_food_ids:actived_food_ids
 	};
 	user_creator_dic[uid]=uid;
 	// console.log('gamedic:');
@@ -401,8 +402,10 @@ GamelistRemote.prototype.onCancelMultiGame = function(creator_id,cb)
 };
 
 //加入游戏
-GamelistRemote.prototype.onJoinMultiGame = function(creator_id,uid,name,cb)
+GamelistRemote.prototype.onJoinMultiGame = function(creator_id,uid,name,actived_food_ids,cb)
 {
+	console.log(gamedic)
+	console.log(creator_id)
 	if(gamedic[creator_id]==undefined)
 	{
 		cb('the game does not exist!');
@@ -414,7 +417,7 @@ GamelistRemote.prototype.onJoinMultiGame = function(creator_id,uid,name,cb)
 		return;
 	}
 
-	var gametype=defaultDataManager.get_d_gametype(gamedic[creator_id].gametype_id);
+	var gametype=defaultDataManager.get_d_gametype(gamedic[creator_id].game.gametype_id);
 	var temp_p_count=gametype.playercount_in_group.slice(0);
 	var group_id;
 	for(uid_temp in gamedic[creator_id].players)
@@ -430,6 +433,7 @@ GamelistRemote.prototype.onJoinMultiGame = function(creator_id,uid,name,cb)
 			break;
 		}
 	}
+	
 	if(group_id==undefined)
 	{
 		cb('the game is full!')
@@ -439,7 +443,8 @@ GamelistRemote.prototype.onJoinMultiGame = function(creator_id,uid,name,cb)
 	gamedic[creator_id].players[uid]={
 		uid:uid,
 		name:name,
-		group_id:group_id
+		group_id:group_id,
+		actived_food_ids:actived_food_ids
 	};
 	user_creator_dic[uid]=creator_id;
 
@@ -498,9 +503,9 @@ GamelistRemote.prototype.onLeaveMultiGame = function(creator_id,uid,cb)
 
 //注销或离开游戏
 GamelistRemote.prototype.onCancelOrLeaveMultiGame = function(uid,cb)
-{console.log(gamedic);
+{
 	var creator_id=user_creator_dic[uid];
-	console.log(creator_id);
+
 	if(gamedic[creator_id]==undefined)
 	{
 		cb('the game does not exist!');
