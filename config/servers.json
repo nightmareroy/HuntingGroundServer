@@ -31,6 +31,9 @@
         ],
         "ddatawriter":[
           {"id": "ddatawriter-server-1", "host":"127.0.0.1", "port" : 12050}
+        ],
+        "friend":[
+          {"id": "friend-server-1", "host":"127.0.0.1", "port" : 13050}
         ]
 
     },
@@ -66,6 +69,9 @@
         ],
         "ddatawriter":[
           {"id": "ddatawriter-server-1", "host":"127.0.0.1", "port" : 12050}
+        ],
+        "friend":[
+          {"id": "friend-server-1", "host":"127.0.0.1", "port" : 13050}
         ]
   }
 }

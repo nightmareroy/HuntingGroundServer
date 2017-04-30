@@ -31,30 +31,39 @@ const PlayerFail="PlayerFail";
 //游戏数据判输，离开频道
 GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_sid,uid,callback)
 {
-	var result;
+	var gameinfo;
 
 	var funcs=[];
 	funcs.push((cb)=>{
-		this.app.rpc.gamedata.gamedataRemote.FailGame(gamedata_sid,creator_id,uid,(result_t)=>{
-			result=result_t;
+		this.app.rpc.gamedata.gamedataRemote.LeaveGame(gamedata_sid,creator_id,uid,(result_t)=>{
+			gameinfo=result_t;
 			cb();
 		});
 	});
+
 	funcs.push((cb)=>{
-		//游戏尚未结束
-		if(result==undefined)
+		this.app.rpc.gamechannel.gamechannelRemote.LeaveGameChannel(gamechannel_sid,uid,()=>{
+			cb();
+		});
+	});
+
+
+	funcs.push((cb)=>{
+		var gameover=gamelib.get_gameover(gameinfo);
+		if(!!gameover)
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.LeaveGameChannel(gamechannel_sid,uid,()=>{
+			this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,gameinfo.game.creator_id,gameover,()=>{
 				cb();
 			});
+			
 		}
-		//游戏结束
 		else
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,()=>{
-				cb();
-			});
+			cb();
 		}
+
+
+			
 		
 	});
 	async.waterfall(funcs,(err,result)=>{

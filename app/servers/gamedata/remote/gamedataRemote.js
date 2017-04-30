@@ -1,13 +1,13 @@
 module.exports = function(app) {
-	return new Handler(app);
+	return new GamedataRemote(app);
 };
 
-var Handler = function(app) {
+var GamedataRemote = function(app) {
 	this.app = app;
 	this.channelService = app.get('channelService');
 };
 
-var handler = Handler.prototype;
+// var handler = Handler.prototype;
 
 
 
@@ -53,7 +53,7 @@ var gamedic={};
 
 ////////////////////////////////////gameinfo/////////////////////////////
 //创建游戏数据，加入列表
-handler.CreateGame=function(gameinfo,cb)
+GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 {
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
@@ -61,7 +61,8 @@ handler.CreateGame=function(gameinfo,cb)
 	gameinfo.game.current_turn=1;
 	gameinfo.map={
 		landform:[],
-		resource:[]
+		resource:[],
+		meat:[]
 	};
 
 	gameinfo.names_left=[];
@@ -78,32 +79,71 @@ handler.CreateGame=function(gameinfo,cb)
 	{
 		var random_l=Math.random();
 		var random_r=Math.random();
-		if(random_l>0.3)
+		var random_m=Math.random();
+		if(random_l>0.4)
 		{
 			//平地
 			gameinfo.map.landform.push(1);
 		}
-		else
+		else if(random_l>0.2)
 		{
-			//山地
+			//丘陵
 			gameinfo.map.landform.push(2);
 		}
+		else
+		{
+			//山脉
+			gameinfo.map.landform.push(3);
+		}
 
-		if(random_r<0.6)
+		if(gameinfo.map.landform[i]!=3)
+		{
+			if(random_r<0.6)
+			{
+				//无资源
+				gameinfo.map.resource.push(1);
+			}
+			else if(random_r<0.8)
+			{
+				//香蕉树
+				gameinfo.map.resource.push(2);
+			}
+			else
+			{
+				//草丛
+				gameinfo.map.resource.push(3);
+			}
+		}
+		else
 		{
 			//无资源
 			gameinfo.map.resource.push(1);
 		}
-		else if(random_r<0.8)
+
+		//肉图的id需要乘以100，前两位作为存在的回合数
+		var d_meat=defaultDataManager.get_d_meat()
+		if(random_m>0.85)
 		{
-			//森林
-			gameinfo.map.resource.push(2);
+			//白蚁
+			var d_meat=defaultDataManager.get_d_meat(3);
+			gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
 		}
+		else if(random_m>0.75)
+		{
+			//鸟蛋
+			var d_meat=defaultDataManager.get_d_meat(5);
+			gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
+		}
+		// if(random_m>0.65)
+		// {
+			
+		// }
 		else
 		{
-			//石头
-			gameinfo.map.resource.push(3);
+			//无
+			gameinfo.map.meat.push(100);
 		}
+			
 	}
 
 	//roles
@@ -117,13 +157,27 @@ handler.CreateGame=function(gameinfo,cb)
 	{
 		var player=gameinfo.players[uid];
 
-		player.direction_turn=1;
-		player.banana=1000;
+		player.direction_turn=0;
+		player.banana=0;
+		player.meat=0;
+		player.branch=0;
+		// player.score=0;
+		player.leave=false;
+
+		// player.cook_skill_dic={};
+		// for(cook_skill_id in defaultDataManager.get_d_cook_skills)
+		// {
+		// 	// var cook_method=defaultDataManager.get_d_cook_skills(cook_skill_id);
+		// 	player.cook_skill_dic[cook_skill_id]=0;
+		// }
+
+		// player.activity=0;
 
 		//每位玩家都有自己的地图及建筑信息的备份，并且备份数据与真实数据是不一样的，因为视野之外的地图及建筑信息不能更新，所以需要做假数据
 		player.map={
 			landform:[],
-			resource:[]
+			resource:[],
+			meat:[]
 		};
 		player.buildings={};
 
@@ -132,6 +186,7 @@ handler.CreateGame=function(gameinfo,cb)
 		{
 			player.map.landform.push(0);
 			player.map.resource.push(0);
+			player.map.meat.push(0);
 		}
 	}
 
@@ -151,6 +206,8 @@ handler.CreateGame=function(gameinfo,cb)
 			}
 			break;
 		case 2:
+			gamelib.create_role(gameinfo,5,2,Math.floor(gametype.width*gametype.height/2)+3);
+			gamelib.create_role(gameinfo,6,2,Math.floor(gametype.width*gametype.height/2)+6);
 			break;
 	}
 
@@ -160,7 +217,7 @@ handler.CreateGame=function(gameinfo,cb)
 }
 
 //获取用户游戏数据
-handler.GetGameInfo=function(creator_id,uid,cb)
+GamedataRemote.prototype.GetGameInfo=function(creator_id,uid,cb)
 {
 	var gameinfo=gamedic[creator_id];
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
@@ -219,7 +276,7 @@ handler.GetGameInfo=function(creator_id,uid,cb)
 
 
 // //返回游戏数据，加入游戏频道
-// handler.LoadGame=function(uid,creator_id,cb)
+// GamedataRemote.prototype.LoadGame=function(uid,creator_id,cb)
 // {
 
 // 	var roles_in_sightzoon=maplib.get_roles_in_sightzoon_of_player(uid,game_total_role,game_total_map,gametype);
@@ -228,10 +285,18 @@ handler.GetGameInfo=function(creator_id,uid,cb)
 // }
 
 //执行游戏回合,返回行动列表
-handler.NextTurn=function(creator_id,uid,direction,current_turn,cb)
+GamedataRemote.prototype.NextTurn=function(creator_id,uid,direction,direction_turn,cb)
 {
 	var gameinfo=gamedic[creator_id];
 
+	//检测输入
+	if(!input_check(gameinfo,direction,direction_turn))
+	{
+		cb("input uncorrect!");
+		return;
+	}
+
+	//存储指令、更新用户指令turn
 	for(role_id in direction)
 	{
 		if(gameinfo.roles[role_id].uid==uid)
@@ -241,11 +306,15 @@ handler.NextTurn=function(creator_id,uid,direction,current_turn,cb)
 		}
 		
 	}
+	gameinfo.players[uid].direction_turn=direction_turn;
 
+	// console.log(gameinfo.game.current_turn)
+
+	//检测所有用户指令状态
 	all_ready=true;
-	for(uid in gameinfo.players)
+	for(uid_t in gameinfo.players)
 	{
-		var player=gameinfo.players[uid];
+		var player=gameinfo.players[uid_t];
 		if(player.direction_turn!=gameinfo.game.current_turn)
 		{
 			all_ready=false;
@@ -255,24 +324,61 @@ handler.NextTurn=function(creator_id,uid,direction,current_turn,cb)
 
 	if(all_ready==false)
 	{
-		cb();
-		return;
+		cb({
+			uid:uid,
+			// direction_turn:direction_turn,
+			action_list_dic:null,
+			gameover:null
+		});
 	}
 	else
 	{
-		var action_list_dic=gamelib.executedirection(gameinfo);
-		cb(action_list_dic);
+		//执行指令
+		var result=gamelib.executedirection(gameinfo);
+
+		if(result.gameover)
+		{
+			delete gamedic[creator_id];
+		}
+		cb({
+			uid:uid,
+			// direction_turn:direction_turn,
+			action_list_dic:result.action_list_dic,
+			gameover:result.gameover
+		});
 	}
 
 	
 }
 
-//放弃当前游戏,
-handler.FailGame=function(creator_id,uid,callback)
+//执行游戏回合,返回行动列表
+GamedataRemote.prototype.SubTurn=function(creator_id,uid,role_id,direction_did,direction_param,cb)
+{
+	var gameinfo=gamedic[creator_id];
+
+	//检测输入
+	// if(!input_check(gameinfo,direction,direction_turn))
+	// {
+	// 	cb("input uncorrect!");
+	// 	return;
+	// }
+
+	
+
+	//执行指令
+	var result=gamelib.execute_sub_direction(gameinfo,role_id,direction_did,direction_param);
+	cb(result);
+
+	
+}
+
+//离开当前游戏
+GamedataRemote.prototype.LeaveGame=function(creator_id,uid,callback)
 {
 	var gameinfo=gamedic[creator_id];
 	//删数据
-	delete gameinfo.players[uid];
+	// delete gameinfo.players[uid];
+	gameinfo.players[uid].failed=true;
 	for(role_id in gameinfo.roles)
 	{
 		if(gameinfo.roles[role_id].uid==uid)
@@ -288,35 +394,70 @@ handler.FailGame=function(creator_id,uid,callback)
 		}
 	}
 
-	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	// var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
-	var result;
-	switch(gameinfo.gametype_id)
-	{
-		case 1:
-			result={};
-			break;
-		case 2:
-			//如果只剩一个玩家，则游戏结束
-			if(gameinfo.players.length==1)
-			{
-				var winner_uid;
-				for(uid_t in gameinfo.players)
-				{
-					winner_uid=uid_t;
-				}
-				result={
-					winner_uid:winner_uid
-				};
-				delete gamedic[creator_id];
-			}
-			break;
-		case 3:
-			break;
-	}
+	// var all_weight=gamelib.get_all_weight(gameinfo);
 
-	
-	callback(result);
+	// var result={
+	// 	type:0,//0: 玩家离开 1:游戏结束
+	// 	data:{}
+	// };
+	// switch(gameinfo.game.gametype_id)
+	// {
+	// 	case 1:
+	// 		result.type=1;
+	// 		result.data.creator_id=uid;
+	// 		result.data.winners={};
+	// 		result.data.losers={};
+	// 		result.data.losers[uid]=all_weight[uid];
+	// 		break;
+	// 	case 2:
+			
+	// 		var user_left=Object.keys(gameinfo.players).length;
+	// 		for(uid_t in gameinfo.players)
+	// 		{
+	// 			var player_t=gameinfo.players[uid_t];
+	// 			if(player_t.failed==true)
+	// 			{
+	// 				user_left--;
+	// 			}
+	// 		}
+	// 		//如果只剩一个玩家，则游戏结束
+	// 		if(user_left==1)
+	// 		{
+	// 			result.type=1;
+	// 			result.data.creator_id=creator_id;
+	// 			result.data.winners={};
+	// 			result.data.losers={};
+
+
+	// 			var winner_uid;
+	// 			for(uid_t in gameinfo.players)
+	// 			{
+	// 				var player_t=gameinfo.players[uid_t];
+	// 				if(player_t.failed==true)
+	// 				{
+	// 					result.data.losers[uid_t]=all_weight[uid_t];
+	// 				}
+	// 				else
+	// 				{
+	// 					result.data.winners[uid_t]=all_weight[uid_t];
+	// 				}
+	// 			}
+	// 			delete gamedic[creator_id];
+	// 		}
+	// 		//如果剩余多余一个玩家，则只是玩家离开
+	// 		else
+	// 		{
+	// 			result.type=0;
+	// 			result.data.uid=uid;
+	// 		}
+	// 		break;
+	// 	case 3:
+	// 		break;
+	// }
+
+	callback(gameinfo);
 	// delete userChannelDic[uid];
 
 
@@ -349,7 +490,14 @@ var get_random=function(a,b)
 	return Math.random()>0.5 ? -1 : 1; 
 }
 
+//输出检查
+var input_check=function(gameinfo,direction,direction_turn)
+{
+	if(direction_turn!=gameinfo.game.current_turn)
+		return false;
 
+	return true;
+}
 
 
 

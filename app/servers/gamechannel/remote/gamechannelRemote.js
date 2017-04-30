@@ -11,10 +11,13 @@ var handler = Handler.prototype;
 
 
 var logger = require('pomelo-logger').getLogger(__filename);
+var async=require('async');
 
 var userChannelDic={};
 
 const DoAction="DoAction";
+const DoSubAction="DoSubAction";
+const UpdateDirectionTurn="UpdateDirectionTurn";
 const UserEnter="UserEnter";
 const UserLeave="UserLeave";
 // const PlayerFail="PlayerFail";
@@ -42,11 +45,6 @@ handler.EnterGameChannel=function(uid,creator_id,frontendId,cb)
 			cb();
 		});
 
-		
-
-		// logger.info(uid);
-		// logger.info("enter game channel:");
-		// logger.info(creator_id);
 	}
 	else
 	{
@@ -59,164 +57,98 @@ handler.EnterGameChannel=function(uid,creator_id,frontendId,cb)
 	
 }
 
-//多人加入游戏频道,session中加入creator_id,并向玩家发送游戏数据
-// handler.MultiEnterGameChannelAndSendGameinfo=function(creator_id,sid_dic,gamedic_user,cb)
-// {
-// 	if(this.channelService.channels[creator_id]!=undefined)
-// 	{
-// 		cb('the creator_id channel is already exist!');
-// 	}
-	
 
-// 	var channel = this.channelService.getChannel(creator_id, true);
-
-// 	//玩家们加入频道
-// 	for(uid in sid_dic)
-// 	{
-// 		channel.add(uid, sid_dic[uid]);
-
-// 	}
-
-
-
-// 	var funcs=[];
-
-// 	//每个玩家session中写数据
-// 	for(uid in sid_dic)
-// 	{
-// 		(()=>{
-// 			var backendSession;
-// 			funcs.push((cb)=>{
-// 				this.app.backendSessionService.getByUid(channel.records[uid].sid,uid,(err,bs)=>{
-// 					backendSession=bs;
-// 					cb();
-// 				})
-		
-// 			});
-
-// 			funcs.push((cb)=>{
-// 				backendSession.set('creator_id',creator_id);
-// 				backendSession.push('creator_id',()=>{
-// 					cb();
-// 				});
-// 			});
-
-// 			funcs.push((cb)=>{
-// 				backendSession.set('creator_id',creator_id);
-// 				backendSession.push('creator_id',()=>{
-// 					cb();
-// 				});
-// 			});
-			
-// 		})();
-		
-// 	}
-
-// 	//推送消息
-// 	funcs.push((cb)=>{
-// 		var uids=[];
-// 		for(uid_t in gamedic.players)
-// 		{
-// 			uids.push(channel.records[uid_t]);
-// 		}
-// 		this.channelService.pushMessageByUids(MultiGameStart, {
-// 			code:200,
-// 			data:null
-// 		}, uids, ()=>{
-// 			cb();
-// 		});
-// 	});
-	
-// 	async.waterfall(funcs,(err,result)=>{
-// 		if(err)
-// 		{
-// 			callback(false);
-// 		}
-// 		else
-// 		{
-// 			callback(true);
-			
-// 		}
-// 	});
-
-
-
-
-
-
-
-
-
-
-
-// 	if(userChannelDic[uid]==undefined)
-// 	{
-		
-		
-// 		userChannelDic[uid]=creator_id;
-
-// 		logger.info(uid);
-// 		logger.info("enter game channel:");
-// 		logger.info(creator_id);
-// 	}
-// 	else
-// 	{
-// 		logger.info("already in the game channel");
-// 	}
-
-// 	cb();
-	
-// }
-
-
-/**
- * Kick user out chat game channel.
- *
- * @param {String} uid unique id for user
- * @param {String} sid server id
- *
- */
-handler.LeaveGameChannel = function(uid,cb)
+handler.LeaveGameChannel = function(uid,callback)
 {
 	var creator_id=userChannelDic[uid];
 	if(creator_id!=undefined)
 	{
-		var channel = this.channelService.getChannel(creator_id, true);
+		var channel = this.channelService.getChannel(creator_id, false);
 		var frontendId=channel.records[uid].sid;
 		channel.leave(uid, frontendId);
 		delete userChannelDic[uid];
 
-		var left_members=channel.getMembers();
-		if(left_members.length==0)
-		{
-			channel.destroy();
-			cb();
-		}
-		else
-		{
-			channel.pushMessage(UserLeave,{
-				code:200,
-				data:{
-					uid:uid
+		funcs=[];
+		funcs.push((cb)=>{
+			this.app.backendSessionService.getByUid(channel.records[uid].sid,uid,(err,backendSessions)=>{
+				var backendSession=backendSessions[0];
+				if(!!backendSessions)
+				{
+					backendSession.set('creator_id',-1);
+					backendSession.set('gamedata_sid',-1);
+					backendSession.set('gamechannel_sid',-1);
+					backendSession.pushAll(()=>{
+						cb();
+					});
 				}
-			},()=>{
-				cb();
+				else
+				{
+					cb();
+				}
+					
+
+
 			});
-		}
-		// logger.info(uid);
-		// logger.info("leave game channel:");
-		// logger.info(creator_id);
+		});
+
+		funcs.push((cb)=>{
+			var left_members=channel.getMembers();
+			if(left_members.length==0)
+			{
+				channel.destroy();
+				cb();
+			}
+			else
+			{
+				channel.pushMessage(UserLeave,{
+					code:200,
+					data:{
+						uid:uid
+					}
+				},()=>{
+					cb();
+				});
+			}
+		});
+		
+		async.waterfall(funcs,(err,result)=>{
+			callback(err);
+		});
+
 
 		
 		
 	}
 	else
 	{
-		cb();
+		callback();
 	}
 	
 	
 };
+
+
+
+// handler.CreateGameChannel=function(gameinfo,cb)
+// {
+// 	var channel = this.channelService.getChannel(gameinfo.game.creator_id, true);
+// 	for(uid in gameinfo.players)
+// 	{
+// 		channel.add(uid, gameinfo.players[uid].frontendId);
+// 	}
+
+// 	cb();
+
+
+	
+	
+// }
+
+
+
+
+
+
 
 handler.BroadcastActions = function(creator_id,action_list_dic,cb)
 {
@@ -229,6 +161,43 @@ handler.BroadcastActions = function(creator_id,action_list_dic,cb)
 			this.channelService.pushMessageByUids(DoAction, {
 				code:200,
 				data:action_list_dic[uid]
+			}, [channel.records[uid]], ()=>{});
+		}
+		
+	}
+
+	cb();
+	
+};
+
+handler.BroadcastDirectionTurn = function(creator_id,uid,cb)
+{
+	var channel = this.channelService.getChannel(creator_id, false);
+
+	channel.pushMessage(UpdateDirectionTurn,{
+		code:200,
+		data:{
+			uid:uid,
+			// direction_turn:direction_turn
+		}
+	},()=>{
+		cb();
+	})
+
+	
+};
+
+handler.BroadcastSubActions = function(creator_id,action_dic,cb)
+{
+	var channel = this.channelService.getChannel(creator_id, false);
+
+	for(uid in action_dic)
+	{
+		if(channel.records[uid]!=undefined)
+		{
+			this.channelService.pushMessageByUids(DoSubAction, {
+				code:200,
+				data:action_dic[uid]
 			}, [channel.records[uid]], ()=>{});
 		}
 		
@@ -261,24 +230,87 @@ handler.BroadcastActions = function(creator_id,action_list_dic,cb)
 // };
 
 //游戏结束
-handler.GameOver = function(creator_id,msg,cb)
+handler.GameOver = function(creator_id,msg,callback)
 {
 	var channel = this.channelService.getChannel(creator_id, false);
+	// console.log(this.channelService.channels);
+	// console.log(channel);
 	// console.log(creator_id);
 
-	channel.pushMessage(GameOver,{
-		code:200,
-		data:msg
-	},()=>{
-		//玩家们离开频道
+	var funcs=[];
+
+	funcs.push((cb)=>{
+		channel.pushMessage(GameOver,{
+			code:200,
+			data:msg
+		},()=>{
+			cb();
+		});
+	});
+
+	// funcs.push((cb)=>{
+	// 	//删除频道
+	// 	channel.destroy();
+	// 	cb();
+	// });
+
+	funcs.push((cb)=>{
+		var sub_funcs=[];
+
 		for(uid_t in channel.records)
 		{
-			// channel.leave(uid,channel.records[uid].sid);
-			delete userChannelDic[uid_t];
+			
+			(()=>{
+				var uid_tt=uid_t;
+				sub_funcs.push((sub_cb)=>{
+
+					this.app.backendSessionService.getByUid(channel.records[uid_tt].sid,uid_tt,(err,backendSessions)=>{
+
+						if(!!backendSessions)
+						{
+							var backendSession=backendSessions[0];
+							//删除路由
+							backendSession.set('creator_id',-1);
+							backendSession.set('gamedata_sid',-1);
+							backendSession.set('gamechannel_sid',-1);
+							backendSession.pushAll(()=>{
+								sub_cb(err);
+							});
+
+						}
+						else
+						{
+							sub_cb(err);
+						}
+							
+
+
+					});
+						
+				});
+				sub_funcs.push((sub_cb)=>{
+					//离开频道
+
+					delete userChannelDic[uid_tt];
+					sub_cb();
+				});
+			})()
+				
+
+
+			
 		}
-		channel.destroy();
-		cb();
+		async.waterfall(sub_funcs,(err,result)=>{
+			//删除频道
+			channel.destroy();
+			cb(err);
+		})
+		
 	});
+
+	async.waterfall(funcs,(err,result)=>{
+		callback(err);
+	})
 
 	
 	
