@@ -2752,3 +2752,108 @@ exports.get_nearist_home_distance=function(gameinfo,uid,pos_id)
 
 // var get_distance=function(width,)
 
+exports.get_path=function(gameinfo,start_pos_id,end_pos_id)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+
+
+	var path=[];
+	var current=start_pos_id;
+	var next=-1;
+
+	while(current!=end_pos_id)
+	{
+		var neibourids=getneibourids(gametype.game.width,gametype.game.height,current);
+		next=-1;
+		for(i in neibourids)
+		{
+			var temp_pos_id=neibourids[i];
+			var temp_pos_landform_id=gameinfo.map.landform[temp_pos_id];
+			var temp_pos_landform=defaultDataManager.get_d_landform(temp_pos_landform_id);
+			if(temp_pos_landform_id!=3)
+			{
+				if(next!=-1)
+				{
+					var next_landform=defaultDataManager.get_d_landform(gameinfo.map.landform[next]);
+					if(temp_pos_landform.cost<next_landform.cost)
+					{
+						next=temp_pos_id;
+					}
+
+				}
+				else
+				{
+					next=temp_pos_id;
+				}
+			}
+		}
+		if(next!=-1)
+		{
+			path.push(next);
+			current=next;
+		}
+
+	}
+
+	return path;
+
+}
+
+var heuristic=function(gameinfo,start_pos_id,end_pos_id,mid_pos_id)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var start=getxy(gametype.game.width,start_pos_id);
+	var end=getxy(gametype.game.width,end_pos_id);
+	var mid=getxy(gametype.game.width,mid_pos_id);
+
+	var dx1=mid.x-end.x;
+	var dy1=mid.y-end.y;
+	var dx2=start.x-end.x;
+	var dy2=start.y-end.y;
+
+	var cross=Math.abs(dx1 * dy2 - dx2 * dy1);
+
+	return distance(gameinfo,mid_pos_id,end_pos_id)+cross*0.001;
+}
+
+
+var distance=function(gameinfo,start_pos_id,end_pos_id)
+{
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var start=getxy(gametype.game.width,start_pos_id);
+	var end=getxy(gametype.game.width,end_pos_id);
+
+	var x1,y1,z1,x2,y2,z2;
+
+	x1=start.x;
+	z1=start.y-(start.x+(start.x&1))/2;
+	y1=0-x1-z1;
+
+	x2=end.x;
+	z2=end.y-(end.x+(end.x&1))/2;
+	y2=0-x2-z2;
+
+	return Math.max(Math.abs(x1-x2),Math.abs(y1-y2),Math.abs(z1-z2));
+}
+
+
+exports.find_meat_pos_ids=function(gameinfo,center_pos_id,radius,meat_id)
+{
+	var meat_pos_ids=[];
+
+	for(var i=1;i<=radius;i++)
+	{
+		var circle_ids=get_circle_ids(gameinfo,center_pos_id,i);
+		for(j in circle_ids)
+		{
+			var temp_pos_id=circle_ids[j];
+			if(gameinfo.map.meat[temp_pos_id]==meat_id)
+			{
+				meat_pos_ids.push(temp_pos_id);
+			}
+		}
+	}
+	return meat_pos_ids;
+}
+
+

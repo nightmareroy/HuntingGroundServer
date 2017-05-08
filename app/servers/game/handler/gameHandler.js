@@ -147,14 +147,17 @@ handler.SingleGameStart=function(msg,session,next)
 
 	var funcs=[];
 
-	//选择gamedata gamechannel服务器
+	//选择gamedata gamechannel timeout服务器
 	funcs.push((cb)=>{
 		var gamedataServers = this.app.getServersByType('gamedata');
 		var gamechannelServers = this.app.getServersByType('gamechannel');
+		var timeoutServers=this.app.getServersByType('timeout');
 		gamedata_sid=gamedataServers[gameinfo.game.creator_id%gamedataServers.length].id;
 		gamechannel_sid=gamechannelServers[gameinfo.game.creator_id%gamechannelServers.length].id;
+		timeout_sid=timeoutServers[gameinfo.game.creator_id%timeoutServers.length].id;
 		gameinfo.game.gamedata_sid=gamedata_sid;
 		gameinfo.game.gamechannel_sid=gamechannel_sid;
+		gameinfo.game.timeout_sid=timeout_sid;
 		cb();
 	});
 
@@ -180,6 +183,7 @@ handler.SingleGameStart=function(msg,session,next)
 		session.set('creator_id',uid);
 		session.set('gamedata_sid',gamedata_sid);
 		session.set('gamechannel_sid',gamechannel_sid);
+		session.set('timeout_sid',timeout_sid);
 		session.pushAll(()=>{
 			cb();
 		});
@@ -192,6 +196,13 @@ handler.SingleGameStart=function(msg,session,next)
 	// 	});
 
 	// });
+
+	//加入计时器
+	funcs.push((cb)=>{
+		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,creator_id,gamedata_sid,gamechannel_sid,()=>{
+			cb();
+		})
+	});
 
 	async.waterfall(funcs,(err,result)=>{
 		if(err)
@@ -440,6 +451,7 @@ handler.NextTurn=function(msg,session,next)
 	var	creator_id=session.get('creator_id');
 	var gamedata_sid=session.get('gamedata_sid');
 	var gamechannel_sid=session.get('gamechannel_sid');
+	var timeout_sid=session.get('timeout_sid');
 
 	var direction=msg.direction;
 	var current_turn=msg.current_turn;
@@ -457,7 +469,7 @@ handler.NextTurn=function(msg,session,next)
 	}
 
 	var action_list_dic;
-	this.app.rpc.gamedata.gamedataRemote.NextTurn(gamedata_sid,creator_id,uid,direction,current_turn,(result)=>{
+	this.app.rpc.gamedata.gamedataRemote.CheckNextTurn(gamedata_sid,creator_id,uid,direction,current_turn,(all_ready)=>{
 		next(
 			null,
 			{
@@ -466,29 +478,31 @@ handler.NextTurn=function(msg,session,next)
 			}
 		)
 
+		// setTimeout()
 		// console.log(result);
+		
 
-		if(!result.action_list_dic)
+		if(!all_ready)
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.BroadcastDirectionTurn(gamechannel_sid,creator_id,result.uid,()=>{
-
-			});
+			this.app.rpc.gamechannel.gamechannelRemote.BroadcastDirectionTurn(gamechannel_sid,creator_id,result.uid,()=>{});
 		}
 		else
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,()=>{
+			this.app.rpc.game.gameRemote.ExecuteDirection(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,()=>{});
 
-			});
-			if(!!result.gameover)
-			{
-				this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
-					
-				});
-			}
-				
-			// if(Object.keys(result.winners).length>0)
-			
+			// this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,creator_id,(result)=>{
+			// 	this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,()=>{
+
+			// 	});
+			// 	if(!!result.gameover)
+			// 	{
+			// 		this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
+						
+			// 		});
+			// 	}
+			// })
 		}
+
 	});
 	// var funcs=[];
 	// funcs.push((cb)=>{

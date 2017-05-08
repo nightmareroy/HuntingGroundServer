@@ -41,6 +41,13 @@ var gamechannelRoute=function(sid,msg,app,cb)
 	// var servers = app.getServersByType('gamechannel');
 	cb(null,sid);
 }
+
+var timeoutRoute=function(sid,msg,app,cb)
+{
+	// var servers = app.getServersByType('gamechannel');
+	cb(null,sid);
+}
+
 	
 
 // 	// var res = gameServers[0];

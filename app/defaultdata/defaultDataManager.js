@@ -641,10 +641,10 @@ exports.init=function(write)
 	return this;
 }
 
-exports.get_d_role=function(role_did)
-{
-	return d_role[role_did];
-}
+// exports.get_d_role=function(role_did)
+// {
+// 	return d_role[role_did];
+// }
 
 exports.get_d_skill=function(skill_id)
 {

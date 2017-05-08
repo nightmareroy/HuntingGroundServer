@@ -34,8 +34,10 @@
         ],
         "friend":[
           {"id": "friend-server-1", "host":"127.0.0.1", "port" : 13050}
+        ],
+        "timeout":[
+          {"id": "timeout-server-1", "host":"127.0.0.1", "port" : 14050}
         ]
-
     },
     "production":{
            "connector":[
@@ -72,6 +74,9 @@
         ],
         "friend":[
           {"id": "friend-server-1", "host":"127.0.0.1", "port" : 13050}
+        ],
+        "timeout":[
+          {"id": "timeout-server-1", "host":"127.0.0.1", "port" : 14050}
         ]
   }
 }

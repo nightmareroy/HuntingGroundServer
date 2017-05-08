@@ -285,7 +285,7 @@ GamedataRemote.prototype.GetGameInfo=function(creator_id,uid,cb)
 // }
 
 //执行游戏回合,返回行动列表
-GamedataRemote.prototype.NextTurn=function(creator_id,uid,direction,direction_turn,cb)
+GamedataRemote.prototype.CheckNextTurn=function(creator_id,uid,direction,direction_turn,cb)
 {
 	var gameinfo=gamedic[creator_id];
 
@@ -314,41 +314,54 @@ GamedataRemote.prototype.NextTurn=function(creator_id,uid,direction,direction_tu
 	all_ready=true;
 	for(uid_t in gameinfo.players)
 	{
-		var player=gameinfo.players[uid_t];
-		if(player.direction_turn!=gameinfo.game.current_turn)
+		if(uid_t>=0)
 		{
-			all_ready=false;
-			break;
+			var player=gameinfo.players[uid_t];
+			if(player.direction_turn!=gameinfo.game.current_turn)
+			{
+				all_ready=false;
+				break;
+			}
 		}
+		
 	}
 
-	if(all_ready==false)
-	{
-		cb({
-			uid:uid,
-			// direction_turn:direction_turn,
-			action_list_dic:null,
-			gameover:null
-		});
-	}
-	else
-	{
-		//执行指令
-		var result=gamelib.executedirection(gameinfo);
-
-		if(result.gameover)
-		{
-			delete gamedic[creator_id];
-		}
-		cb({
-			uid:uid,
-			// direction_turn:direction_turn,
-			action_list_dic:result.action_list_dic,
-			gameover:result.gameover
-		});
-	}
+	// if(all_ready==false)
+	// {
+	// 	cb({
+	// 		uid:uid,
+	// 		// direction_turn:direction_turn,
+	// 		action_list_dic:null,
+	// 		gameover:null
+	// 	});
+	// }
+	// else
+	// {
+		
+	// }
+	cb(all_ready);
 
 	
+}
+
+
+//执行游戏回合,返回行动列表
+GamedataRemote.prototype.ExecuteDirection=function(creator_id,cb)
+{
+	var gameinfo=gamedic[creator_id];
+	//执行指令
+	var result=gamelib.executedirection(gameinfo);
+
+	if(result.gameover)
+	{
+		delete gamedic[creator_id];
+	}
+	cb({
+		uid:uid,
+		// direction_turn:direction_turn,
+		action_list_dic:result.action_list_dic,
+		gameover:result.gameover
+	});
 }
 
 //执行游戏回合,返回行动列表
