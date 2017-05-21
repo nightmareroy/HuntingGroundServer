@@ -340,11 +340,25 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 	property.max_move=5*(0.5+property.health*0.5)*property.muscle/property.weight;
 
 
+	property.now_grow_state=0;
+	if(property.old<1000)
+	{
+		property.now_grow_state=0;
+	}
+	else if(property.old<2000)
+	{
+		property.now_grow_state=1;
+	}
+	else
+	{
+		property.now_grow_state=2;
+	}
+
 
 
 	// property.move=Math.ceil(property.health*property.muscle/property.weight*2);
 	
-	property.basal_metabolism=Math.floor(property.muscle*0.12+property.fat*0.04);
+	property.basal_metabolism=Math.floor(property.muscle*0.03+property.fat*0.01);
 
 	return property;
 }

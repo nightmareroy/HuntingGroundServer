@@ -700,6 +700,11 @@ exports.get_d_single_game_info=function(progress_id)
 {
 	return d_single_game_info[progress_id];
 }
+exports.get_d_single_game_info_max_progress=function()
+{
+	return Object.keys(d_single_game_info).length;
+}
+
 exports.get_d_role_init_property=function(role_did)
 {
 	return d_role_init_property[role_did];

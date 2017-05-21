@@ -159,6 +159,9 @@ handler.login = function(msg, session, next) {
 		session.set('creator_id',-1);
 		session.set('gamedata_sid',-1);
 		session.set('gamechannel_sid',-1);
+		// var gameServers=this.app.getServersByType('game');
+		// game_sid=gameServers[gameinfo.game.creator_id%gameServers.length].id;
+		// session.set('game',);
 		session.set('actived_food_ids',JSON.parse(user.actived_food_ids));
 		session.pushAll((err)=>{
 			cb(err)
@@ -210,7 +213,8 @@ handler.login = function(msg, session, next) {
 								// current_game_id:user.current_game_id,
 								win_count:user.win_count,
 								fail_count:user.fail_count,
-								name:user.name
+								name:user.name,
+								single_game_progress:user.single_game_progress
 								
 
 							},
@@ -249,11 +253,13 @@ var onLeaveGame=function(app,session)
 	// console.log(session.get('test'));
 	// console.log(session.get('creator_id'));
 	var	creator_id=session.get('creator_id');
-	var gamedata_sid=session.get('gamedata_sid');
-	var gamechannel_sid=session.get('gamechannel_sid');
+
 	if(creator_id!=-1)
 	{
-		app.rpc.game.gameRemote.OnUserLeave(session, creator_id,gamedata_sid,gamechannel_sid,session.uid,(err)=>{
+		var gamedata_sid=session.get('gamedata_sid');
+		var gamechannel_sid=session.get('gamechannel_sid');
+		var timeout_sid=session.get('timeout_sid');
+		app.rpc.game.gameRemote.OnUserLeave(session, creator_id,gamedata_sid,gamechannel_sid,timeout_sid,session.uid,(err)=>{
 		});
 		
 	}
@@ -332,8 +338,8 @@ handler.register=function(msg, session, next)
 			return;
 		} 
 		else {
-			var param=[account,pwd];
-			var sql = "INSERT INTO user (account, pwd)VALUES(?,?)";
+			var param=[account,pwd,account];
+			var sql = "INSERT INTO user (account, pwd,name)VALUES(?,?,?)";
 			db.query(sql,param,(err,rows, fields)=>{
 				if (err) {
 					next(
@@ -384,3 +390,106 @@ function AntiSqlValid(text)
 // 	}
 // 	return rs;
 // }
+
+handler.get_user = function(msg, session, next)
+{
+	var uid=session.uid;
+	if(!uid)
+	{
+		next(
+			null,
+			{
+				code:500,
+				data:'have not log in'
+			}
+		)
+	}
+
+	var user;
+
+	var connection;
+	var sql;
+	var funcs=[];
+	funcs.push((cb)=>{
+		db.getConnection((err,conn)=>{
+			connection=conn;
+			cb(err);
+		});
+	});
+	funcs.push((cb)=>{
+		connection.beginTransaction((err)=>{
+			cb(err);
+		});
+	});
+	funcs.push((cb)=>{
+		sql="select * from user where uid=?";
+		connection.query(sql,uid,(err,rows)=>{
+			if(rows)
+			{
+				if(rows.length==0)
+				{
+					cb('account does not exist!');
+				}
+				else
+				{
+					user=rows[0];
+					cb();
+				}
+
+				
+				
+				
+			}
+			else
+			{
+				cb(err);
+			}
+			
+		});
+	});
+
+	async.waterfall(funcs,(err,result)=>{
+		if(err)
+		{
+			connection.rollback((err_rollback)=>{
+				connection.release();
+				console.log(err);
+				next(
+					null,
+					{
+						code:500,
+						data:false
+					}
+				)
+			});
+		}
+		else
+		{
+			connection.commit((err_commit)=>{
+				connection.release();
+				next(
+					null,
+					{
+						code:200,
+						data:{
+							uid:user.uid,
+							account:user.account,
+							// current_game_id:user.current_game_id,
+							win_count:user.win_count,
+							fail_count:user.fail_count,
+							name:user.name,
+							single_game_progress:user.single_game_progress
+							
+
+						}
+						
+					}
+				)
+			});
+			
+		}
+	});
+
+
+
+}

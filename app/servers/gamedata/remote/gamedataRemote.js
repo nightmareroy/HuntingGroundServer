@@ -21,7 +21,7 @@ var rolelib=require('../../../gamelib/role');
 
 var pomelo = require('pomelo');
 var async=require('async');
-// var db=pomelo.app.get('db');
+var db=pomelo.app.get('db');
 
 var defaultDataManager=pomelo.app.get('defaultDataManager');
 var uuid=require('uuid');
@@ -59,6 +59,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 
 	gamedic[gameinfo.game.creator_id]=gameinfo;
 	gameinfo.game.current_turn=1;
+	// gameinfo.game.win_condition="30回合内达到1000总体重";
 	gameinfo.map={
 		landform:[],
 		resource:[],
@@ -121,28 +122,25 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 		}
 
 		//肉图的id需要乘以100，前两位作为存在的回合数
-		var d_meat=defaultDataManager.get_d_meat()
-		if(random_m>0.85)
-		{
-			//白蚁
-			var d_meat=defaultDataManager.get_d_meat(3);
-			gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
-		}
-		else if(random_m>0.75)
-		{
-			//鸟蛋
-			var d_meat=defaultDataManager.get_d_meat(5);
-			gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
-		}
-		// if(random_m>0.65)
+		// var d_meat=defaultDataManager.get_d_meat()
+		// if(random_m>0.85)
 		// {
-			
+		// 	//白蚁
+		// 	var d_meat=defaultDataManager.get_d_meat(3);
+		// 	gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
 		// }
-		else
-		{
-			//无
-			gameinfo.map.meat.push(100);
-		}
+		// else if(random_m>0.75)
+		// {
+		// 	//鸟蛋
+		// 	var d_meat=defaultDataManager.get_d_meat(5);
+		// 	gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
+		// }
+		// else
+		// {
+		// 	//无
+		// 	gameinfo.map.meat.push(100);
+		// }
+		gameinfo.map.meat.push(100);
 			
 	}
 
@@ -162,7 +160,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 		player.meat=0;
 		player.branch=0;
 		// player.score=0;
-		player.leave=false;
+		// player.leave=false;
 
 		// player.cook_skill_dic={};
 		// for(cook_skill_id in defaultDataManager.get_d_cook_skills)
@@ -206,8 +204,20 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			}
 			break;
 		case 2:
-			gamelib.create_role(gameinfo,5,2,Math.floor(gametype.width*gametype.height/2)+3);
-			gamelib.create_role(gameinfo,6,2,Math.floor(gametype.width*gametype.height/2)+6);
+			var pos_ids=[];
+			for(uid in gameinfo.players)
+			{
+				var random_pos_id;
+				do
+				{
+					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
+				}while(pos_ids.indexOf(random_pos_id)!=-1)
+				pos_ids.push(random_pos_id);
+				
+				gamelib.create_role(gameinfo,uid,2,random_pos_id);
+			}
+			// gamelib.create_role(gameinfo,5,2,Math.floor(gametype.width*gametype.height/2)+3);
+			// gamelib.create_role(gameinfo,6,2,Math.floor(gametype.width*gametype.height/2)+6);
 			break;
 	}
 
@@ -217,7 +227,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 }
 
 //获取用户游戏数据
-GamedataRemote.prototype.GetGameInfo=function(creator_id,uid,cb)
+GamedataRemote.prototype.GetUserGameInfo=function(creator_id,uid,cb)
 {
 	var gameinfo=gamedic[creator_id];
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
@@ -225,7 +235,7 @@ GamedataRemote.prototype.GetGameInfo=function(creator_id,uid,cb)
 	var gameinfo_user={};
 	gameinfo_user.game=gameinfo.game;
 	gameinfo_user.roles=maplib.get_roles_in_sightzoon_of_player(uid,gameinfo);
-	// console.log(gameinfo_user.roles);
+	
 	// console.log(gameinfo.roles);
 	gameinfo_user.buildings=gameinfo.players[uid].buildings;
 	gameinfo_user.map=gameinfo.players[uid].map;
@@ -273,7 +283,12 @@ GamedataRemote.prototype.GetGameInfo=function(creator_id,uid,cb)
 
 }
 
-
+//获取游戏数据
+GamedataRemote.prototype.GetGameInfo=function(creator_id,cb)
+{
+	var gameinfo=gamedic[creator_id];
+	cb(gameinfo);
+}
 
 // //返回游戏数据，加入游戏频道
 // GamedataRemote.prototype.LoadGame=function(uid,creator_id,cb)
@@ -346,9 +361,11 @@ GamedataRemote.prototype.CheckNextTurn=function(creator_id,uid,direction,directi
 
 
 //执行游戏回合,返回行动列表
-GamedataRemote.prototype.ExecuteDirection=function(creator_id,cb)
+GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamechannel_sid,timeout_sid,callback)
 {
+	// console.log(creator_id)
 	var gameinfo=gamedic[creator_id];
+	// console.log(gameinfo)
 	//执行指令
 	var result=gamelib.executedirection(gameinfo);
 
@@ -356,12 +373,100 @@ GamedataRemote.prototype.ExecuteDirection=function(creator_id,cb)
 	{
 		delete gamedic[creator_id];
 	}
-	cb({
-		uid:uid,
-		// direction_turn:direction_turn,
-		action_list_dic:result.action_list_dic,
-		gameover:result.gameover
+	// cb({
+	// 	uid:uid,
+	// 	action_list_dic:result.action_list_dic,
+	// 	gameover:result.gameover
+	// });
+
+
+	this.app.rpc.timeout.timeoutRemote.update_time(timeout_sid,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+		gameinfo.game.nexttime=nexttime;
+		// console.log(result.gameover)
+		this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,nexttime,()=>{
+			if(!!result.gameover)
+			{
+				var connection;
+				var sql;
+				var funcs=[];
+				funcs.push((cb)=>{
+					db.getConnection((err,conn)=>{
+						connection=conn;
+						cb(err);
+					});
+				});
+				funcs.push((cb)=>{
+					connection.beginTransaction((err)=>{
+						cb(err);
+					});
+				});
+				funcs.push((cb)=>{
+					this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
+						cb();
+					});
+				});
+				funcs.push((cb)=>{
+					this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,creator_id,()=>{
+						cb();
+					});
+				});
+				funcs.push((cb)=>{
+					if(gameinfo.game.gametype_id==1&&result.gameover.result.winner_groups.length>0&&gameinfo.game.single_game_progress!=defaultDataManager.get_d_single_game_info_max_progress())
+					{
+						sql="update user set single_game_progress=single_game_progress+1 where uid =?";
+						connection.query(sql,creator_id,(err,rows)=>{
+							cb(err);
+						});
+					}
+					else
+					{
+						cb();
+					}
+						
+				});
+
+
+				async.waterfall(funcs,(err,result)=>{
+					if(err)
+					{
+						connection.rollback((err_rollback)=>{
+							connection.release();
+							callback(err);
+						});
+					}
+					else
+					{
+						connection.commit((err_commit)=>{
+							connection.release();
+							callback();
+						});
+						
+					}
+				});
+
+
+				// this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
+				// 	this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,creator_id,()=>{
+				// 		callback();
+				// 	});
+				// });
+				
+				
+				
+			}
+			else
+			{
+				callback();
+			}
+		});
+
 	});
+
+		
+
+	
+
+
 }
 
 //执行游戏回合,返回行动列表
@@ -391,7 +496,7 @@ GamedataRemote.prototype.LeaveGame=function(creator_id,uid,callback)
 	var gameinfo=gamedic[creator_id];
 	//删数据
 	// delete gameinfo.players[uid];
-	gameinfo.players[uid].failed=true;
+	// gameinfo.players[uid].failed=true;
 	for(role_id in gameinfo.roles)
 	{
 		if(gameinfo.roles[role_id].uid==uid)

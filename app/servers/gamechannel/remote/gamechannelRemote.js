@@ -70,21 +70,29 @@ handler.LeaveGameChannel = function(uid,callback)
 
 		funcs=[];
 		funcs.push((cb)=>{
-			this.app.backendSessionService.getByUid(channel.records[uid].sid,uid,(err,backendSessions)=>{
-				var backendSession=backendSessions[0];
+			this.app.backendSessionService.getByUid(frontendId,uid,(err,backendSessions)=>{
 				if(!!backendSessions)
 				{
-					backendSession.set('creator_id',-1);
-					backendSession.set('gamedata_sid',-1);
-					backendSession.set('gamechannel_sid',-1);
-					backendSession.pushAll(()=>{
+					var backendSession=backendSessions[0];
+					if(!!backendSessions[0])
+					{
+						backendSession.set('creator_id',-1);
+						backendSession.set('gamedata_sid',-1);
+						backendSession.set('gamechannel_sid',-1);
+						backendSession.set('timeout_sid',-1);
+						backendSession.pushAll(()=>{
+							cb();
+						});
+					}
+					else
+					{
 						cb();
-					});
+					}
 				}
 				else
 				{
 					cb();
-				}
+				}	
 					
 
 
@@ -150,7 +158,7 @@ handler.LeaveGameChannel = function(uid,callback)
 
 
 
-handler.BroadcastActions = function(creator_id,action_list_dic,cb)
+handler.BroadcastActions = function(creator_id,action_list_dic,nexttime,cb)
 {
 	var channel = this.channelService.getChannel(creator_id, false);
 
@@ -160,7 +168,10 @@ handler.BroadcastActions = function(creator_id,action_list_dic,cb)
 		{
 			this.channelService.pushMessageByUids(DoAction, {
 				code:200,
-				data:action_list_dic[uid]
+				data:{
+					action_list_dic:action_list_dic[uid],
+					nexttime:nexttime
+				}
 			}, [channel.records[uid]], ()=>{});
 		}
 		
@@ -236,6 +247,11 @@ handler.GameOver = function(creator_id,msg,callback)
 	// console.log(this.channelService.channels);
 	// console.log(channel);
 	// console.log(creator_id);
+	if(!channel)
+	{
+		callback();
+		return;
+	}
 
 	var funcs=[];
 

@@ -232,7 +232,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 					game:{
 						creator_id:src_uid,
 						gametype_id:2
-						
+						// win_condition:"50回合内达到1000总体重,或对手总体重为0"
 					},
 					players:{}
 					
@@ -246,10 +246,15 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 				funcs.push((cb)=>{
 					var gamedataServers = this.app.getServersByType('gamedata');
 					var gamechannelServers = this.app.getServersByType('gamechannel');
+					var timeoutServers=this.app.getServersByType('timeout');
 					gamedata_sid=gamedataServers[gameinfo.game.creator_id%gamedataServers.length].id;
 					gamechannel_sid=gamechannelServers[gameinfo.game.creator_id%gamechannelServers.length].id;
+					timeout_sid=timeoutServers[gameinfo.game.creator_id%timeoutServers.length].id;
 					// gameinfo.game.gamedata_sid=gamedata_sid;
 					// gameinfo.game.gamechannel_sid=gamechannel_sid;
+					gameinfo.game.gamedata_sid=gamedata_sid;
+					gameinfo.game.gamechannel_sid=gamechannel_sid;
+					gameinfo.game.timeout_sid=timeout_sid;
 					cb();
 				});
 
@@ -268,6 +273,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 						backendSession.set('creator_id',src_uid);
 						backendSession.set('gamedata_sid',gamedata_sid);
 						backendSession.set('gamechannel_sid',gamechannel_sid);
+						backendSession.set('timeout_sid',timeout_sid);
 						backendSession.pushAll(()=>{
 							cb(err);
 						});
@@ -288,6 +294,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 						backendSession.set('creator_id',src_uid);
 						backendSession.set('gamedata_sid',gamedata_sid);
 						backendSession.set('gamechannel_sid',gamechannel_sid);
+						backendSession.set('timeout_sid',timeout_sid);
 						backendSession.pushAll(()=>{
 							cb(err);
 						});
@@ -301,6 +308,14 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 				// 		cb();
 				// 	});
 				// });
+	
+				//加入计时器
+				funcs.push((cb)=>{
+					this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,src_uid,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+						gameinfo.game.nexttime=nexttime;
+						cb();
+					})
+				});
 				
 
 				//在游戏数据服务器中创建游戏数据

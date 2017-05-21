@@ -29,34 +29,41 @@ var uuid=require('uuid');
 var timeout_dic={}
 
 
-var time=10000;
-TimeoutRemote.prototype.start_time=function(creator_id,gamedata_sid,gamechannel_sid,cb)
+var time=180000;
+TimeoutRemote.prototype.start_time=function(creator_id,gamedata_sid,gamechannel_sid,timeout_sid,cb)
 {
 
 	timeout_dic[creator_id]={
 		timeout:setTimeout(()=>{
-			this.app.rpc.gameRemote.ExecuteDirection(creator_id,gamedata_sid,gamechannel_sid,()=>{})
+			this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{})
 		},time),
 		gamedata_sid:gamedata_sid,
 		gamechannel_sid:gamechannel_sid
 	}
-	cb();
+	var timestamp=new Date().getTime();
+	cb(time+timestamp);
 }
 
-TimeoutRemote.prototype.update_time=function(creator_id,cb)
+TimeoutRemote.prototype.update_time=function(creator_id,gamedata_sid,gamechannel_sid,timeout_sid,cb)
 {
+	
 	var timeout=timeout_dic[creator_id];
-	cleartimeout(timeout.timeout);
+	// console.log(creator_id)
+	// console.log(timeout_dic)
+	clearTimeout(timeout.timeout);
 	timeout.timeout=setTimeout(()=>{
-		this.app.rpc.gameRemote.ExecuteDirection(creator_id,timeout.gamedata_sid,timeout.gamechannel_sid,()=>{})
+		// console.log('time out...')
+		// this.app.rpc.game.gameRemote.ExecuteDirection(creator_id,timeout.gamedata_sid,timeout.gamechannel_sid,()=>{})
+		this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{})
 	},time);
-	cb();
+	var timestamp=new Date().getTime()
+	cb(time+timestamp);
 }
 
 TimeoutRemote.prototype.delete_time=function(creator_id,cb)
 {
 	var timeout=timeout_dic[creator_id];
-	cleartimeout(timeout.timeout);
+	clearTimeout(timeout.timeout);
 	delete timeout_dic[creator_id];
 	cb();
 }

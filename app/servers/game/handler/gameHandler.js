@@ -107,10 +107,12 @@ handler.SingleGameStart=function(msg,session,next)
 
 	//章节id，备用
 	var progress_id=msg.progress_id;
+	// var single_game_info=defaultDataManager.get_d_single_game_info(progress_id);
 
 	var	creator_id=session.get('creator_id');
-	var gamedata_sid=session.get('gamedata_sid');
-	var gamechannel_sid=session.get('gamechannel_sid');
+	var gamedata_sid;//=session.get('gamedata_sid');
+	var gamechannel_sid;//=session.get('gamechannel_sid');
+	var timeout_sid;
 
 	var backendSession;
 
@@ -161,6 +163,14 @@ handler.SingleGameStart=function(msg,session,next)
 		cb();
 	});
 
+	//加入计时器
+	funcs.push((cb)=>{
+		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,uid,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+			gameinfo.game.nexttime=nexttime;
+			cb();
+		})
+	});
+
 	//创建游戏数据
 	funcs.push((cb)=>{
 		this.app.rpc.gamedata.gamedataRemote.CreateGame(gamedata_sid,gameinfo,(gameinfo_t)=>{
@@ -180,6 +190,10 @@ handler.SingleGameStart=function(msg,session,next)
 
 	//路由参数绑定到session
 	funcs.push((cb)=>{
+		// console.log(creator_id);
+		// console.log(gamedata_sid);
+		// console.log(gamechannel_sid);
+		// console.log(timeout_sid);
 		session.set('creator_id',uid);
 		session.set('gamedata_sid',gamedata_sid);
 		session.set('gamechannel_sid',gamechannel_sid);
@@ -197,12 +211,9 @@ handler.SingleGameStart=function(msg,session,next)
 
 	// });
 
-	//加入计时器
-	funcs.push((cb)=>{
-		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,creator_id,gamedata_sid,gamechannel_sid,()=>{
-			cb();
-		})
-	});
+	
+
+	
 
 	async.waterfall(funcs,(err,result)=>{
 		if(err)
@@ -235,134 +246,134 @@ handler.SingleGameStart=function(msg,session,next)
 }
 
 //开始游戏, 此时游戏所有玩家应该都在线,只有房主才能执行
-handler.MultiGameStart=function(msg,session,next)
-{
-	var uid=session.uid;
+// handler.MultiGameStart=function(msg,session,next)
+// {
+// 	var uid=session.uid;
 
-	var gameinfo_hall;
+// 	var gameinfo_hall;
 
-	var gamedata_sid;
-	var gamechannel_sid;
+// 	var gamedata_sid;
+// 	var gamechannel_sid;
 
-	var sid_dic;
-
-
-	var funcs=[];
+// 	var sid_dic;
 
 
+// 	var funcs=[];
 
 
-	funcs.push((cb)=>{
-		this.app.rpc.gamelist.gamelistRemote.getMultiGameByCreatorId(session,uid,(gameinfo_hall_t)=>{
-			if(gameinfo_hall_t==undefined)
-			{
-				cb('the game is not exist!')
-			}
-			else
-			{
-				gameinfo_hall=gameinfo_hall_t;
-				cb();
-			}
+
+
+// 	funcs.push((cb)=>{
+// 		this.app.rpc.gamelist.gamelistRemote.getMultiGameByCreatorId(session,uid,(gameinfo_hall_t)=>{
+// 			if(gameinfo_hall_t==undefined)
+// 			{
+// 				cb('the game is not exist!')
+// 			}
+// 			else
+// 			{
+// 				gameinfo_hall=gameinfo_hall_t;
+// 				cb();
+// 			}
 			
 
-		});
-	});
+// 		});
+// 	});
 
-	//选择gamedata gamechannel服务器
-	funcs.push((cb)=>{
-		var gamedataServers = this.app.getServersByType('gamedata');
-		var gamechannelServers = this.app.getServersByType('gamechannel');
-		gamedata_sid=gamedataServers[gameinfo_hall.game.creator_id%gamedataServers.length].id;
-		gamechannel_sid=gamechannelServers[gameinfo_hall.game.creator_id%gamechannelServers.length].id;
-		cb();
-	});
-
-
-	//创建游戏数据
-	funcs.push((cb)=>{
-		this.app.rpc.gamedata.gamedataRemote.CreateGame(gamedata_sid,gameinfo_hall,(gameinfo)=>{
-			if(gameinfo==undefined)
-			{
-				cb('err');
-			}
-			else
-			{
-				cb();
-			}
-		});	
-	});
+// 	//选择gamedata gamechannel服务器
+// 	funcs.push((cb)=>{
+// 		var gamedataServers = this.app.getServersByType('gamedata');
+// 		var gamechannelServers = this.app.getServersByType('gamechannel');
+// 		gamedata_sid=gamedataServers[gameinfo_hall.game.creator_id%gamedataServers.length].id;
+// 		gamechannel_sid=gamechannelServers[gameinfo_hall.game.creator_id%gamechannelServers.length].id;
+// 		cb();
+// 	});
 
 
+// 	//创建游戏数据
+// 	funcs.push((cb)=>{
+// 		this.app.rpc.gamedata.gamedataRemote.CreateGame(gamedata_sid,gameinfo_hall,(gameinfo)=>{
+// 			if(gameinfo==undefined)
+// 			{
+// 				cb('err');
+// 			}
+// 			else
+// 			{
+// 				cb();
+// 			}
+// 		});	
+// 	});
 
-	// funcs.push((cb)=>{
-	// 	var sub_funcs=[];
-	// 	for(player_id in gameinfo_hall.players)
-	// 	{
-	// 		(()=>{
+
+
+// 	// funcs.push((cb)=>{
+// 	// 	var sub_funcs=[];
+// 	// 	for(player_id in gameinfo_hall.players)
+// 	// 	{
+// 	// 		(()=>{
 				
-	// 			var player_id_t=player_id;
-	// 			sub_funcs.push((sub_cb)=>{
-	// 				sql="insert into active_game_route(uid,creator_id) values (?,?)";
-	// 				connection.query(sql,[player_id_t,gameinfo_hall.game.creator_id],(sub_err,sub_rows)=>{
-	// 					sub_cb(sub_err);
-	// 				});
-	// 			});
+// 	// 			var player_id_t=player_id;
+// 	// 			sub_funcs.push((sub_cb)=>{
+// 	// 				sql="insert into active_game_route(uid,creator_id) values (?,?)";
+// 	// 				connection.query(sql,[player_id_t,gameinfo_hall.game.creator_id],(sub_err,sub_rows)=>{
+// 	// 					sub_cb(sub_err);
+// 	// 				});
+// 	// 			});
 				
-	// 		})();
-	// 	}
-	// 	async.waterfall(sub_funcs,(err,result)=>{
-	// 		cb(err);
-	// 	})
-	// });
+// 	// 		})();
+// 	// 	}
+// 	// 	async.waterfall(sub_funcs,(err,result)=>{
+// 	// 		cb(err);
+// 	// 	})
+// 	// });
 
 	
 
-	funcs.push((cb)=>{
-		//通知玩家游戏开始
-		this.app.rpc.gamelist.gamelistRemote.MultiGameStart(session,gameinfo_hall.game.creator_id,gamedata_sid,gamechannel_sid,(err)=>{
-			cb(err);
-		});		
-	});
+// 	funcs.push((cb)=>{
+// 		//通知玩家游戏开始
+// 		this.app.rpc.gamelist.gamelistRemote.MultiGameStart(session,gameinfo_hall.game.creator_id,gamedata_sid,gamechannel_sid,(err)=>{
+// 			cb(err);
+// 		});		
+// 	});
 
-	// funcs.push((cb)=>{
-	// 	//离开游戏大厅
-	// 	this.app.rpc.gamelist.gamelistRemote.onMultiLeaveGameHall(session,session.frontendId,uid,(sid_dic_t)=>{
-	// 		sid_dic=sid_dic_t;
-	// 		cb();
-	// 	});
-	// });
+// 	// funcs.push((cb)=>{
+// 	// 	//离开游戏大厅
+// 	// 	this.app.rpc.gamelist.gamelistRemote.onMultiLeaveGameHall(session,session.frontendId,uid,(sid_dic_t)=>{
+// 	// 		sid_dic=sid_dic_t;
+// 	// 		cb();
+// 	// 	});
+// 	// });
 
 
 
-	async.waterfall(funcs,(err,result)=>{
-		if(err)
-		{
-			console.log(err);
-			next(
-				null,
-				{
-					code:500,
-					data:"start game failed.."
+// 	async.waterfall(funcs,(err,result)=>{
+// 		if(err)
+// 		{
+// 			console.log(err);
+// 			next(
+// 				null,
+// 				{
+// 					code:500,
+// 					data:"start game failed.."
 					
-				}
-			)
-		}
-		else
-		{
-			next(
-				null,
-				{
-					code:200,
-					data:"start game success,please load game info.."
-				}
-			)
+// 				}
+// 			)
+// 		}
+// 		else
+// 		{
+// 			next(
+// 				null,
+// 				{
+// 					code:200,
+// 					data:"start game success,please load game info.."
+// 				}
+// 			)
 
-		}
-	});
+// 		}
+// 	});
 
 	
 
-}
+// }
 
 //加入游戏频道,并获取游戏数据
 handler.LoadGame=function(msg,session,next)
@@ -391,8 +402,8 @@ handler.LoadGame=function(msg,session,next)
 		return;
 	}
 	
-
 	var gameinfo;
+	var user_gameinfo;
 
 	var funcs=[];
 
@@ -404,7 +415,15 @@ handler.LoadGame=function(msg,session,next)
 	});
 
 	funcs.push((cb)=>{
-		this.app.rpc.gamedata.gamedataRemote.GetGameInfo(gamedata_sid,creator_id,uid,(gameinfo_t)=>{
+		this.app.rpc.gamedata.gamedataRemote.GetUserGameInfo(gamedata_sid,creator_id,uid,(gameinfo_t)=>{
+			user_gameinfo=gameinfo_t;
+			cb();
+		});
+
+	});
+
+	funcs.push((cb)=>{
+		this.app.rpc.gamedata.gamedataRemote.GetGameInfo(gamedata_sid,creator_id,(gameinfo_t)=>{
 			gameinfo=gameinfo_t;
 			cb();
 		});
@@ -432,7 +451,7 @@ handler.LoadGame=function(msg,session,next)
 				{
 					code:200,
 					data:{
-						gameinfo:gameinfo,
+						gameinfo:user_gameinfo,
 						groupinfo:gamelib.get_population_genetic_info(gameinfo,uid),
 						weight_dic:gamelib.get_all_weight(gameinfo)
 					}
@@ -484,11 +503,12 @@ handler.NextTurn=function(msg,session,next)
 
 		if(!all_ready)
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.BroadcastDirectionTurn(gamechannel_sid,creator_id,result.uid,()=>{});
+			this.app.rpc.gamechannel.gamechannelRemote.BroadcastDirectionTurn(gamechannel_sid,creator_id,uid,()=>{});
 		}
 		else
 		{
-			this.app.rpc.game.gameRemote.ExecuteDirection(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,()=>{});
+			// this.app.rpc.game.gameRemote.ExecuteDirection(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,()=>{});
+			this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{});
 
 			// this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,creator_id,(result)=>{
 			// 	this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,()=>{
