@@ -198,8 +198,28 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			switch(gameinfo.game.progress_id)
 			{
 				case 1:
-					gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+3);
-					gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+6);
+					var father=gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+3);
+					// var son=gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+6);
+					// father.role.blood_sugar=100;
+					// father.role.blood_sugar_max=100;
+					// father.role.old=1000;
+					// father.role.muscle=200;
+					// son.role.blood_sugar=100;
+					// son.role.blood_sugar_max=100;
+					// son.role.old=0;
+					// son.role.muscle=100;
+
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+7);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+8);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+9);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+10);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+11);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+12);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+13);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+14);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+15);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+16);
+					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+17);
 					break;
 			}
 			break;
@@ -207,14 +227,36 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			var pos_ids=[];
 			for(uid in gameinfo.players)
 			{
+				//father
 				var random_pos_id;
 				do
 				{
 					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
-				}while(pos_ids.indexOf(random_pos_id)!=-1)
+				}while(pos_ids.indexOf(random_pos_id)!=-1&&maplib.get_pos_movable(random_pos_id,gameinfo))
 				pos_ids.push(random_pos_id);
-				
-				gamelib.create_role(gameinfo,uid,2,random_pos_id);
+				var father=gamelib.create_role(gameinfo,uid,2,random_pos_id);
+
+				//son
+				var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
+				var neibourid;
+				for(i in neibourids)
+				{
+					neibourid=neibourids[i];
+					if(pos_ids.indexOf(neibourid)!=-1&&maplib.get_pos_movable(neibourid,gameinfo))
+					{
+						break;
+					}
+				}
+				var son=gamelib.create_role(gameinfo,uid,2,random_pos_id);
+
+				// father.role.blood_sugar=100;
+				// father.role.blood_sugar_max=100;
+				// father.role.old=1000;
+				// father.role.muscle=200;
+				// son.role.blood_sugar=100;
+				// son.role.blood_sugar_max=100;
+				// son.role.old=0;
+				// son.role.muscle=100;
 			}
 			// gamelib.create_role(gameinfo,5,2,Math.floor(gametype.width*gametype.height/2)+3);
 			// gamelib.create_role(gameinfo,6,2,Math.floor(gametype.width*gametype.height/2)+6);
@@ -386,6 +428,8 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 		this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,nexttime,()=>{
 			if(!!result.gameover)
 			{
+				var user;
+
 				var connection;
 				var sql;
 				var funcs=[];
@@ -411,7 +455,15 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 					});
 				});
 				funcs.push((cb)=>{
-					if(gameinfo.game.gametype_id==1&&result.gameover.result.winner_groups.length>0&&gameinfo.game.single_game_progress!=defaultDataManager.get_d_single_game_info_max_progress())
+					sql="select * from user where uid =?";
+					connection.query(sql,creator_id,(err,rows)=>{
+						user=rows[0];
+						cb(err);
+					});
+						
+				});
+				funcs.push((cb)=>{
+					if(gameinfo.game.gametype_id==1&&result.gameover.result.winner_groups.length>0&&user.single_game_progress==gameinfo.game.progress_id&&gameinfo.game.progress_id!=defaultDataManager.get_d_single_game_info_max_progress())
 					{
 						sql="update user set single_game_progress=single_game_progress+1 where uid =?";
 						connection.query(sql,creator_id,(err,rows)=>{

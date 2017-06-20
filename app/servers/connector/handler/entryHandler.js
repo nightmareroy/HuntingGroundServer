@@ -156,6 +156,7 @@ handler.login = function(msg, session, next) {
 		//sid
 		session.set('sid', this.app.get('serverId'));
 		session.set('user_name',user.name);
+		// session.set('single_game_progress',user.single_game_progress);
 		session.set('creator_id',-1);
 		session.set('gamedata_sid',-1);
 		session.set('gamechannel_sid',-1);

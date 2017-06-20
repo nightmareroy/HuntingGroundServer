@@ -41,6 +41,7 @@ TimeoutRemote.prototype.start_time=function(creator_id,gamedata_sid,gamechannel_
 		gamechannel_sid:gamechannel_sid
 	}
 	var timestamp=new Date().getTime();
+	console.log('start time');
 	cb(time+timestamp);
 }
 
@@ -56,7 +57,8 @@ TimeoutRemote.prototype.update_time=function(creator_id,gamedata_sid,gamechannel
 		// this.app.rpc.game.gameRemote.ExecuteDirection(creator_id,timeout.gamedata_sid,timeout.gamechannel_sid,()=>{})
 		this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{})
 	},time);
-	var timestamp=new Date().getTime()
+	var timestamp=new Date().getTime();
+	console.log('update time');
 	cb(time+timestamp);
 }
 
@@ -65,6 +67,7 @@ TimeoutRemote.prototype.delete_time=function(creator_id,cb)
 	var timeout=timeout_dic[creator_id];
 	clearTimeout(timeout.timeout);
 	delete timeout_dic[creator_id];
+	console.log('delete time');
 	cb();
 }
 

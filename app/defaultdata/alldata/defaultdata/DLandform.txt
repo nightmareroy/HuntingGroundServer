@@ -1,1 +1,0 @@
-{"0":{"landform_id":0,"cost":0.5,"desc":"未探索（只有user map中才有此值）"},"1":{"landform_id":1,"cost":0.5,"desc":"平原"},"2":{"landform_id":2,"cost":0.75,"desc":"山地"}}

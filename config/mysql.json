@@ -1,17 +1,17 @@
 {
 	"development": {
-	  "host" : "10.66.243.169",
+	  "host" : "127.0.0.1",
 		"port" : "3306",
 		"database" : "huntingground_db",
-		"user" : "root",
-		"password" : "liyue851113"
+		"user" : "liyue",
+		"password" : "liyue"
 	},
 
 	"production": {
-	  "host" : "10.66.243.169",
+	  "host" : "127.0.0.1",
 		"port" : "3306",
 		"database" : "huntingground_db",
-		"user" : "root",
-		"password" : "liyue851113"
+		"user" : "liyue",
+		"password" : "liyue"
 	}
 }

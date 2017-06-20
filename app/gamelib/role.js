@@ -319,8 +319,17 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 
 
 	//生成高级数据
-	property.health=property.blood_sugar/property.blood_sugar_max;
-	property.weight=property.muscle+property.fat+property.amino_acid;
+	
+	property.weight=property.muscle+property.fat;
+
+	property.blood_sugar_max=Math.round(property.weight/2);
+
+	property.health=1;
+	if(!!property.blood_sugar)
+	{
+		property.health=property.blood_sugar/property.blood_sugar_max;
+	}
+	
 
 	// property.speed_lv=Math.ceil(2*property.health*property.muscle/property.weight)-1;
 	// property.current_speed_lv=property.speed_lv;
@@ -337,7 +346,7 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 	// property.move=Math.pow(2,property.speed_lv);
 
 
-	property.max_move=5*(0.5+property.health*0.5)*property.muscle/property.weight;
+	property.max_move=3*(0.5+property.health*0.5)*property.muscle/property.weight;
 
 
 	property.now_grow_state=0;

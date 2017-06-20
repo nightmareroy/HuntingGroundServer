@@ -1,1 +1,0 @@
-{"1":{"building_did":1,"far_sight":0,"see_through":0,"hide_when_outsight":0},"2":{"building_did":2,"far_sight":0,"see_through":0,"hide_when_outsight":0},"3":{"building_did":3,"far_sight":0,"see_through":0,"hide_when_outsight":0}}

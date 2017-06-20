@@ -2429,7 +2429,6 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 	var cost=landform_next.cost;
 
 	var role=gameinfo.roles[role_id];
-	
 	if(role.move>=cost&&landform_next.cost>0)
 	{
 		role.pos_id=next_pos_id;

@@ -79,6 +79,23 @@ app.configure('production|development', function() {
   
 	// app.load(pomelo.sync, {path:__dirname + '/app/dao/mapping', dbclient: dbclient});
   // app.use(sync, {sync: {path:__dirname + '/app/dao/mapping', dbclient: dbclient}});
+
+  app.set('connectorConfig',
+		{
+			connector : pomelo.connectors.hybridconnector,
+			heartbeat : 10,
+			timeout:60,
+			disconnectOnTimeout:true,
+			
+			// handshake:handshake,
+			// setNoDelay:true,
+     
+			// enable useDict will make route to be compressed 
+			useDict: true,
+
+			// enable useProto
+			useProtobuf: true    
+		});
   
   var db=require('./app/dao/mysql/mysql_transaction').init(app);
   app.set('db', db);

@@ -29,6 +29,8 @@ var d_building_init_property={};
 var d_names={};
 var d_cook_skill={};
 var d_food={};
+var d_story_talk={};
+var d_random_talk={};
 
 exports.init=function(write)
 {
@@ -552,6 +554,76 @@ exports.init=function(write)
 					var str=JSON.stringify(d_cook_skill);
 					fs.writeFile('app/defaultdata/alldata/defaultdata/DCookSkill.txt',str,(err_fs,data_fs)=>{
 						datalist.DCookSkill=md5.md5(str);
+						cb(err_fs);
+					});
+				}
+				else
+				{
+					cb();
+				}
+				
+			}
+		});
+	});
+
+	funcs.push((cb)=>{
+		sql="select * from food";
+		connection.query(sql,null,(err,rows)=>{
+			if(err)
+			{
+				cb(err);
+			}
+			else
+			{
+				for(i in rows)
+				{
+					d_food[rows[i].food_id]=rows[i];
+					d_food[rows[i].food_id].cook_skills_need=JSON.parse(d_food[rows[i].food_id].cook_skills_need);
+					d_food[rows[i].food_id].inspire_skill_properties=JSON.parse(d_food[rows[i].food_id].inspire_skill_properties);
+					d_food[rows[i].food_id].inspire_skill_values=JSON.parse(d_food[rows[i].food_id].inspire_skill_values);
+				}
+				if(write)
+				{
+					var str=JSON.stringify(d_food);
+					fs.writeFile('app/defaultdata/alldata/defaultdata/DFood.txt',str,(err_fs,data_fs)=>{
+						datalist.DFood=md5.md5(str);
+						cb(err_fs);
+					});
+				}
+				else
+				{
+					cb();
+				}
+				
+			}
+		});
+	});
+
+	funcs.push((cb)=>{
+		sql="select * from story_talk";
+		connection.query(sql,null,(err,rows)=>{
+			if(err)
+			{
+				cb(err);
+			}
+			else
+			{
+				for(i in rows)
+				{
+					if(!d_story_talk[rows[i].process_id])
+					{
+						d_story_talk[rows[i].process_id]=[];
+					}
+					d_story_talk[rows[i].process_id][rows[i].sub_id]={
+						role_did:rows[i].role_did,
+						content:rows[i].content
+					}
+				}
+				if(write)
+				{
+					var str=JSON.stringify(d_story_talk);
+					fs.writeFile('app/defaultdata/alldata/defaultdata/DStoryTalk.txt',str,(err_fs,data_fs)=>{
+						datalist.DStoryTalk=md5.md5(str);
 						cb(err_fs);
 					});
 				}
