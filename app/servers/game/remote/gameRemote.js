@@ -50,7 +50,7 @@ GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_si
 
 	funcs.push((cb)=>{
 		var gameover=gamelib.get_gameover(gameinfo);
-		// console.log('gameover')
+		// 
 		// console.log(gameover)
 		if(!!gameover)
 		{

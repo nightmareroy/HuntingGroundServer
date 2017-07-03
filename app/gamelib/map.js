@@ -14,12 +14,14 @@ var sightSys=[
 	{
 		'1':[[1,1],[1,0],[0,-1],[-1,0],[-1,1],[0,1]],
 		'2':[[2,1],[2,0],[2,-1],[1,-1],[0,-2],[-1,-1],[-2,-1],[-2,0],[-2,1],[-1,2],[0,2],[1,2]],
-		'3':[[3,2],[3,1],[3,0],[3,-1],[2,-2],[1,-2],[0,-3],[-1,-2],[-2,-2],[-3,-1],[-3,0],[-3,1],[-3,2],[-2,2],[-1,3],[0,3],[1,3],[2,2]]
+		'3':[[3,2],[3,1],[3,0],[3,-1],[2,-2],[1,-2],[0,-3],[-1,-2],[-2,-2],[-3,-1],[-3,0],[-3,1],[-3,2],[-2,2],[-1,3],[0,3],[1,3],[2,2]],
+		'4':[[4,2],[4,1],[4,0],[4,-1],[4,-2],[3,-2],[2,-3],[1,-3],[0,-4],[-1,-3],[-2,-3],[-3,-2],[-4,-2],[-4,-1],[-4,0],[-4,1],[-4,2],[-3,3],[-2,3],[-1,4],[0,4],[1,4],[2,3],[3,3]]
 	},
 	{
 		'1':[[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[0,1]],
 		'2':[[2,1],[2,0],[2,-1],[1,-2],[0,-2],[-1,-2],[-2,-1],[-2,0],[-2,1],[-1,1],[0,2],[1,1]],
-		'3':[[3,1],[3,0],[3,-1],[3,-2],[2,-2],[1,-3],[0,-3],[1,-3],[-2,-2],[-3,-2],[-3,-1],[-3,0],[-3,1],[-2,2],[-1,2],[0,3],[1,2],[2,2]]
+		'3':[[3,1],[3,0],[3,-1],[3,-2],[2,-2],[1,-3],[0,-3],[1,-3],[-2,-2],[-3,-2],[-3,-1],[-3,0],[-3,1],[-2,2],[-1,2],[0,3],[1,2],[2,2]],
+		'4':[[4,2],[4,1],[4,0],[4,-1],[4,-2],[3,-3],[2,-3],[1,-4],[0,-4],[-1,-4],[-2,-3],[-3,-3],[-4,-2],[-4,-1],[-4,0],[-4,1],[-4,2],[-3,2],[-2,3],[-1,3],[0,4],[1,3],[2,3],[3,2]]
 	}
 ]
 
@@ -163,6 +165,11 @@ var get_circle_ids=function(gameinfo,pos_id,circle_id)
 		}
 	}
 	return result;
+}
+
+exports.get_circle_ids=function(gameinfo,pos_id,circle_id)
+{
+	return get_circle_ids(gameinfo,pos_id,circle_id);
 }
 
 var genshadowborderids=function(centerid,width,height,targetid,radius,includefirst)
@@ -2481,10 +2488,10 @@ exports.get_enemies=function(role_id,gameinfo)//game_total_role,game_total_playe
 	}
 
 
-	if(role.direction_did!=1)
-	{
-		return enemies;
-	}
+	// if(role.direction_did!=1)
+	// {
+	// 	return enemies;
+	// }
 
 	var roles_in_sightzoon=exports.get_roles_in_sightzoon_of_player(role.uid,gameinfo);
 	var circle_ids_one=get_circle_ids(gameinfo,role.pos_id,1);
@@ -2762,7 +2769,7 @@ exports.get_path=function(gameinfo,start_pos_id,end_pos_id)
 
 	while(current!=end_pos_id)
 	{
-		var neibourids=getneibourids(gametype.game.width,gametype.game.height,current);
+		var neibourids=getneibourids(gametype.width,gametype.height,current);
 		next=-1;
 		for(i in neibourids)
 		{

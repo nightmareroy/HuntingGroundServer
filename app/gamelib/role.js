@@ -322,13 +322,12 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 	
 	property.weight=property.muscle+property.fat;
 
-	property.blood_sugar_max=Math.round(property.weight/2);
+	// property.blood_sugar_max=Math.round(property.weight/2);
 
-	property.health=1;
-	if(!!property.blood_sugar)
-	{
-		property.health=property.blood_sugar/property.blood_sugar_max;
-	}
+	property.health=property.blood_sugar/property.blood_sugar_max;
+
+	property.attack=property.muscle;
+	property.defence=Math.round(property.weight/2);
 	
 
 	// property.speed_lv=Math.ceil(2*property.health*property.muscle/property.weight)-1;

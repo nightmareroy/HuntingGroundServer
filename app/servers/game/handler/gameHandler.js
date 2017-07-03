@@ -117,14 +117,27 @@ handler.SingleGameStart=function(msg,session,next)
 	var backendSession;
 
 
-	if(creator_id!=-1)
+
+	if(!creator_id)
 	{
 		//
 		next(
 			null,
 			{
 				code:500,
-				data:'already in game'
+				data:'未登录'
+			}
+		)
+		return;
+	}
+	else if(creator_id!=-1)
+	{
+		//
+		next(
+			null,
+			{
+				code:500,
+				data:'已在游戏中'
 			}
 		)
 		return;
@@ -244,6 +257,171 @@ handler.SingleGameStart=function(msg,session,next)
 
 
 }
+
+
+handler.PvEGameStart=function(msg,session,next)
+{
+	var uid=session.uid;
+
+
+	// var single_game_info=defaultDataManager.get_d_single_game_info(progress_id);
+
+	var	creator_id=session.get('creator_id');
+	var gamedata_sid;//=session.get('gamedata_sid');
+	var gamechannel_sid;//=session.get('gamechannel_sid');
+	var timeout_sid;
+
+	var backendSession;
+
+
+
+	if(!creator_id)
+	{
+		//
+		next(
+			null,
+			{
+				code:500,
+				data:'未登录'
+			}
+		)
+		return;
+	}
+	else if(creator_id!=-1)
+	{
+		//
+		next(
+			null,
+			{
+				code:500,
+				data:'已在游戏中'
+			}
+		)
+		return;
+	}
+
+	var gameinfo={
+		game:{
+			creator_id:uid,
+			game_name:'pve game',
+			gametype_id:4
+			
+		},
+		players:{}
+	}
+	gameinfo.players[uid]={
+		uid:uid,
+		name:session.get('user_name'),
+		group_id:1,
+		actived_food_ids:session.get('actived_food_ids')
+	}
+	gameinfo.players[-1]={
+		uid:-1,
+		name:"电脑(简单的)",
+		group_id:2,
+		actived_food_ids:session.get('actived_food_ids')
+	}
+
+	var funcs=[];
+
+	//选择gamedata gamechannel timeout服务器
+	funcs.push((cb)=>{
+		var gamedataServers = this.app.getServersByType('gamedata');
+		var gamechannelServers = this.app.getServersByType('gamechannel');
+		var timeoutServers=this.app.getServersByType('timeout');
+		gamedata_sid=gamedataServers[gameinfo.game.creator_id%gamedataServers.length].id;
+		gamechannel_sid=gamechannelServers[gameinfo.game.creator_id%gamechannelServers.length].id;
+		timeout_sid=timeoutServers[gameinfo.game.creator_id%timeoutServers.length].id;
+		gameinfo.game.gamedata_sid=gamedata_sid;
+		gameinfo.game.gamechannel_sid=gamechannel_sid;
+		gameinfo.game.timeout_sid=timeout_sid;
+		cb();
+	});
+
+	//加入计时器
+	funcs.push((cb)=>{
+		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,uid,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+			gameinfo.game.nexttime=nexttime;
+			cb();
+		})
+	});
+
+	//创建游戏数据
+	funcs.push((cb)=>{
+		this.app.rpc.gamedata.gamedataRemote.CreateGame(gamedata_sid,gameinfo,(gameinfo_t)=>{
+			if(gameinfo_t==undefined)
+			{
+				cb('err');
+			}
+			else
+			{
+				// console.log(gameinfo)
+				cb();
+			}
+		});	
+	});
+
+
+
+	//路由参数绑定到session
+	funcs.push((cb)=>{
+		// console.log(creator_id);
+		// console.log(gamedata_sid);
+		// console.log(gamechannel_sid);
+		// console.log(timeout_sid);
+		session.set('creator_id',uid);
+		session.set('gamedata_sid',gamedata_sid);
+		session.set('gamechannel_sid',gamechannel_sid);
+		session.set('timeout_sid',timeout_sid);
+		session.pushAll(()=>{
+			cb();
+		});
+	});
+
+	//创建并加入游戏频道
+	// funcs.push((cb)=>{
+	// 	this.app.rpc.gamechannel.gamechannelRemote.CreateGameChannel(gamechannel_sid,gameinfo,()=>{
+	// 		cb();
+	// 	});
+
+	// });
+
+	
+
+	
+
+	async.waterfall(funcs,(err,result)=>{
+		if(err)
+		{
+			console.log(err);
+			next(
+				null,
+				{
+					code:500,
+					data:"start game failed.."
+					
+				}
+			)
+		}
+		else
+		{
+			next(
+				null,
+				{
+					code:200,
+					data:"start game success,please load game info.."
+				}
+			)
+
+		}
+	});
+
+
+
+}
+
+
+
 
 //开始游戏, 此时游戏所有玩家应该都在线,只有房主才能执行
 // handler.MultiGameStart=function(msg,session,next)
@@ -390,17 +568,19 @@ handler.LoadGame=function(msg,session,next)
 	// console.log(creator_id);
 	// console.log(gamedata_sid);
 	// console.log(gamechannel_sid);
-	if(creator_id==undefined)
+	if(!creator_id)
 	{
+		//
 		next(
 			null,
 			{
 				code:500,
-				data:false
+				data:'未登录'
 			}
 		)
 		return;
 	}
+
 	
 	var gameinfo;
 	var user_gameinfo;
@@ -475,17 +655,19 @@ handler.NextTurn=function(msg,session,next)
 	var direction=msg.direction;
 	var current_turn=msg.current_turn;
 
-	if(creator_id==undefined)
+	if(!creator_id)
 	{
+		//
 		next(
 			null,
 			{
 				code:500,
-				data:false
+				data:'未登录'
 			}
 		)
 		return;
 	}
+
 
 	var action_list_dic;
 	this.app.rpc.gamedata.gamedataRemote.CheckNextTurn(gamedata_sid,creator_id,uid,direction,current_turn,(all_ready)=>{
@@ -552,17 +734,19 @@ handler.SubTurn=function(msg,session,next)
 	var direction_param=msg.direction_param;
 	// var current_turn=msg.current_turn;
 
-	if(creator_id==undefined)
+	if(!creator_id)
 	{
+		//
 		next(
 			null,
 			{
 				code:500,
-				data:false
+				data:'未登录'
 			}
 		)
 		return;
 	}
+
 
 	var action_dic;
 	this.app.rpc.gamedata.gamedataRemote.SubTurn(gamedata_sid,creator_id,uid,role_id,direction_did,direction_param,(result)=>{
@@ -601,4 +785,65 @@ handler.SubTurn=function(msg,session,next)
 
 	// 	}
 	// });
+}
+
+//放弃当前进行的游戏
+handler.LeaveGame=function(msg,session,next)
+{
+	var uid=session.uid;
+
+	var	creator_id=session.get('creator_id');
+	var gamedata_sid=session.get('gamedata_sid');
+	var gamechannel_sid=session.get('gamechannel_sid');
+	var timeout_sid=session.get('timeout_sid');
+
+	if(!creator_id)
+	{
+		//
+		next(
+			null,
+			{
+				code:500,
+				data:'未登录'
+			}
+		)
+		return;
+	}
+	else if(creator_id==-1)
+	{
+		//
+		next(
+			null,
+			{
+				code:500,
+				data:'不在游戏中'
+			}
+		)
+		return;
+	}
+
+	this.app.rpc.game.gameRemote.OnUserLeave(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,uid,(err)=>{
+		if(!!err)
+		{
+			next(
+				null,
+				{
+					code:500,
+					data:'退出游戏失败'
+				}
+			);
+		}
+		else
+		{
+			next(
+				null,
+				{
+					code:200,
+					data:'退出游戏'
+				}
+			);
+		}
+			
+	});
+		
 }

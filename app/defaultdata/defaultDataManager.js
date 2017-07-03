@@ -30,7 +30,7 @@ var d_names={};
 var d_cook_skill={};
 var d_food={};
 var d_story_talk={};
-var d_random_talk={};
+// var d_random_talk={};
 
 exports.init=function(write)
 {
@@ -393,6 +393,11 @@ exports.init=function(write)
 				for(i in rows)
 				{
 					d_single_game_info[rows[i].progress_id]=rows[i];
+					d_single_game_info[rows[i].progress_id].food_ids=JSON.parse(d_single_game_info[rows[i].progress_id].food_ids);
+					d_single_game_info[rows[i].progress_id].direction_dids=JSON.parse(d_single_game_info[rows[i].progress_id].direction_dids);
+					d_single_game_info[rows[i].progress_id].landform_map=JSON.parse(d_single_game_info[rows[i].progress_id].landform_map);
+					d_single_game_info[rows[i].progress_id].resource_map=JSON.parse(d_single_game_info[rows[i].progress_id].resource_map);
+					d_single_game_info[rows[i].progress_id].meat_map=JSON.parse(d_single_game_info[rows[i].progress_id].meat_map);
 				}
 				if(write)
 				{
@@ -614,10 +619,7 @@ exports.init=function(write)
 					{
 						d_story_talk[rows[i].process_id]=[];
 					}
-					d_story_talk[rows[i].process_id][rows[i].sub_id]={
-						role_did:rows[i].role_did,
-						content:rows[i].content
-					}
+					d_story_talk[rows[i].process_id][rows[i].sub_id]=rows[i].content;
 				}
 				if(write)
 				{
@@ -636,38 +638,6 @@ exports.init=function(write)
 		});
 	});
 
-	funcs.push((cb)=>{
-		sql="select * from food";
-		connection.query(sql,null,(err,rows)=>{
-			if(err)
-			{
-				cb(err);
-			}
-			else
-			{
-				for(i in rows)
-				{
-					d_food[rows[i].food_id]=rows[i];
-					d_food[rows[i].food_id].cook_skills_need=JSON.parse(d_food[rows[i].food_id].cook_skills_need);
-					d_food[rows[i].food_id].inspire_skill_properties=JSON.parse(d_food[rows[i].food_id].inspire_skill_properties);
-					d_food[rows[i].food_id].inspire_skill_values=JSON.parse(d_food[rows[i].food_id].inspire_skill_values);
-				}
-				if(write)
-				{
-					var str=JSON.stringify(d_food);
-					fs.writeFile('app/defaultdata/alldata/defaultdata/DFood.txt',str,(err_fs,data_fs)=>{
-						datalist.DFood=md5.md5(str);
-						cb(err_fs);
-					});
-				}
-				else
-				{
-					cb();
-				}
-				
-			}
-		});
-	});
 
 
 
