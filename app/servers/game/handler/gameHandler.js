@@ -117,7 +117,6 @@ handler.SingleGameStart=function(msg,session,next)
 	var backendSession;
 
 
-
 	if(!creator_id)
 	{
 		//
@@ -317,8 +316,14 @@ handler.PvEGameStart=function(msg,session,next)
 	}
 	gameinfo.players[-1]={
 		uid:-1,
-		name:"电脑(简单的)",
-		group_id:2,
+		name:"倭黑猩猩家",
+		group_id:-1,
+		actived_food_ids:session.get('actived_food_ids')
+	}
+	gameinfo.players[-2]={
+		uid:-2,
+		name:"棕熊家",
+		group_id:-2,
 		actived_food_ids:session.get('actived_food_ids')
 	}
 
@@ -633,7 +638,7 @@ handler.LoadGame=function(msg,session,next)
 					data:{
 						gameinfo:user_gameinfo,
 						groupinfo:gamelib.get_population_genetic_info(gameinfo,uid),
-						weight_dic:gamelib.get_all_weight(gameinfo)
+						weight_dic:gamelib.get_all_resultable_weight(gameinfo)
 					}
 				}
 			)
@@ -680,7 +685,7 @@ handler.NextTurn=function(msg,session,next)
 		)
 
 		// setTimeout()
-		// console.log(result);
+		// console.log(all_ready);
 		
 
 		if(!all_ready)
@@ -690,7 +695,10 @@ handler.NextTurn=function(msg,session,next)
 		else
 		{
 			// this.app.rpc.game.gameRemote.ExecuteDirection(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,()=>{});
-			this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{});
+			// console.log('start');
+			this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{
+				console.log('callback');
+			});
 
 			// this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,creator_id,(result)=>{
 			// 	this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,()=>{

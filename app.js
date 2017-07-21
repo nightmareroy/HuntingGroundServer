@@ -108,6 +108,12 @@ app.configure('production|development', 'ddatawriter', function() {
   var defaultDataManager=require('./app/defaultdata/defaultDataManager').init(true);
 });
 
+app.configure('production|development', 'game', function() {
+
+  var defaultDataManager=require('./app/defaultdata/defaultDataManager').init();
+  app.set('defaultDataManager', defaultDataManager);
+});
+
 app.configure('production|development', 'gamedata', function() {
 	// var db=require('./app/dao/mysql/mysql_transaction').init(app);
  //  app.set('db', db);

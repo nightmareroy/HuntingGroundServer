@@ -47,7 +47,6 @@ TimeoutRemote.prototype.start_time=function(creator_id,gamedata_sid,gamechannel_
 
 TimeoutRemote.prototype.update_time=function(creator_id,gamedata_sid,gamechannel_sid,timeout_sid,cb)
 {
-	
 	var timeout=timeout_dic[creator_id];
 	// console.log(creator_id)
 	// console.log(timeout_dic)

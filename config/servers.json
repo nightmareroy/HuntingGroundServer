@@ -1,82 +1,82 @@
 {
     "development":{
         "connector":[
-             {"id":"connector-server-1", "host":"192.168.0.100", "port":4050, "clientPort": 3050, "frontend": true,"name":"测试服"}
+             {"id":"connector-server-1", "host":"127.0.0.1", "port":4050, "clientPort": 3050, "frontend": true,"name":"测试服"}
          ],
         "chat":[
-             {"id":"chat-server-1", "host":"192.168.0.100", "port":6050}
+             {"id":"chat-server-1", "host":"127.0.0.1", "port":6050}
         ],
         "gate":[
-	       {"id": "gate-server-1", "host": "192.168.0.100", "clientPort": 3014, "frontend": true}
+	       {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
 	      ],
 
         "time":[
-          {"id": "time-server-1", "host":"192.168.0.100", "port" : 7000},
-          {"id": "time-server-2", "host":"192.168.0.100", "port" : 7001}
+          {"id": "time-server-1", "host":"127.0.0.1", "port" : 7000},
+          {"id": "time-server-2", "host":"127.0.0.1", "port" : 7001}
         ],
         "game":[
-          {"id":"game-server-1","host":"192.168.0.100","port":8050}
+          {"id":"game-server-1","host":"127.0.0.1","port":8050}
         ],
         "gamelist":[
-          {"id":"gamelist-server-1","host":"192.168.0.100","port":9050}
+          {"id":"gamelist-server-1","host":"127.0.0.1","port":9050}
         ],
         "gamedata":[
-          {"id":"gamedata-server-1","host":"192.168.0.100","port":10050},
-          {"id":"gamedata-server-2","host":"192.168.0.100","port":10051}
+          {"id":"gamedata-server-1","host":"127.0.0.1","port":10050},
+          {"id":"gamedata-server-2","host":"127.0.0.1","port":10051}
         ],
         "gamechannel":[
-          {"id":"gamechannel-server-1","host":"192.168.0.100","port":11050},
-          {"id":"gamechannel-server-2","host":"192.168.0.100","port":11051},
-          {"id":"gamechannel-server-3","host":"192.168.0.100","port":11052}
+          {"id":"gamechannel-server-1","host":"127.0.0.1","port":11050},
+          {"id":"gamechannel-server-2","host":"127.0.0.1","port":11051},
+          {"id":"gamechannel-server-3","host":"127.0.0.1","port":11052}
         ],
         "ddatawriter":[
-          {"id": "ddatawriter-server-1", "host":"192.168.0.100", "port" : 12050}
+          {"id": "ddatawriter-server-1", "host":"127.0.0.1", "port" : 12050}
         ],
         "friend":[
-          {"id": "friend-server-1", "host":"192.168.0.100", "port" : 13050}
+          {"id": "friend-server-1", "host":"127.0.0.1", "port" : 13050}
         ],
         "timeout":[
-          {"id": "timeout-server-1", "host":"192.168.0.100", "port" : 14050}
+          {"id": "timeout-server-1", "host":"127.0.0.1", "port" : 14050}
         ]
     },
     "production":{
            "connector":[
-             {"id":"connector-server-1", "host":"192.168.0.100", "port":4050, "clientPort": 3050, "frontend": true}
+             {"id":"connector-server-1", "host":"127.0.0.1", "port":4050, "clientPort": 3050, "frontend": true}
          ],
         "chat":[
-             {"id":"chat-server-1", "host":"192.168.0.100", "port":6050}
+             {"id":"chat-server-1", "host":"127.0.0.1", "port":6050}
         ],
         "gate":[
-           {"id": "gate-server-1", "host": "192.168.0.100", "clientPort": 3014, "frontend": true}
+           {"id": "gate-server-1", "host": "127.0.0.1", "clientPort": 3014, "frontend": true}
         ],
 
         "time":[
-          {"id": "time-server-1", "host":"192.168.0.100", "port" : 7000 },
-          {"id": "time-server-2", "host":"192.168.0.100", "port" : 7001 }
+          {"id": "time-server-1", "host":"127.0.0.1", "port" : 7000 },
+          {"id": "time-server-2", "host":"127.0.0.1", "port" : 7001 }
         ],
         "game":[
-          {"id":"game-server-1","host":"192.168.0.100","port":8050}
+          {"id":"game-server-1","host":"127.0.0.1","port":8050}
         ],
         "gamelist":[
-          {"id":"gamelist-server-1","host":"192.168.0.100","port":9050}
+          {"id":"gamelist-server-1","host":"127.0.0.1","port":9050}
         ],
         "gamedata":[
-          {"id":"gamedata-server-1","host":"192.168.0.100","port":10050},
-          {"id":"gamedata-server-2","host":"192.168.0.100","port":10051}
+          {"id":"gamedata-server-1","host":"127.0.0.1","port":10050},
+          {"id":"gamedata-server-2","host":"127.0.0.1","port":10051}
         ],
         "gamechannel":[
-          {"id":"gamechannel-server-1","host":"192.168.0.100","port":11050},
-          {"id":"gamechannel-server-2","host":"192.168.0.100","port":11051},
-          {"id":"gamechannel-server-3","host":"192.168.0.100","port":11052}
+          {"id":"gamechannel-server-1","host":"127.0.0.1","port":11050},
+          {"id":"gamechannel-server-2","host":"127.0.0.1","port":11051},
+          {"id":"gamechannel-server-3","host":"127.0.0.1","port":11052}
         ],
         "ddatawriter":[
-          {"id": "ddatawriter-server-1", "host":"192.168.0.100", "port" : 12050}
+          {"id": "ddatawriter-server-1", "host":"127.0.0.1", "port" : 12050}
         ],
         "friend":[
-          {"id": "friend-server-1", "host":"192.168.0.100", "port" : 13050}
+          {"id": "friend-server-1", "host":"127.0.0.1", "port" : 13050}
         ],
         "timeout":[
-          {"id": "timeout-server-1", "host":"192.168.0.100", "port" : 14050}
+          {"id": "timeout-server-1", "host":"127.0.0.1", "port" : 14050}
         ]
   }
 }

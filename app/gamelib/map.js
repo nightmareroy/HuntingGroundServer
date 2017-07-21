@@ -2728,18 +2728,18 @@ var get_distance=function(gameinfo,pos_id_a,pos_id_b)
 
 }
 
-exports.get_nearist_home_distance=function(gameinfo,uid,pos_id)
+exports.get_nearist_home_distance=function(gameinfo,role_id)
 {
+	var role=gameinfo.roles[role_id];
 	var distance=-1;
 	// console.log(gameinfo.buildings)
 	for(building_id in gameinfo.buildings)
 	{
 		// console.log('e')
 		var building=gameinfo.buildings[building_id];
-		// console.log(building)
-		if(building.building_did==1&&building.uid==uid)//树窝
+		if((building.building_did==1||building.building_did==4)&&building.uid==role.uid)//树窝
 		{
-			var temp_distance=get_distance(gameinfo,pos_id,building.pos_id);
+			var temp_distance=get_distance(gameinfo,role.pos_id,building.pos_id);
 			
 			if(distance==-1)
 			{
@@ -2760,74 +2760,246 @@ exports.get_nearist_home_distance=function(gameinfo,uid,pos_id)
 
 exports.get_path=function(gameinfo,start_pos_id,end_pos_id)
 {
+	console.log('start:'+start_pos_id)
+	console.log('end:'+end_pos_id)
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
 
-	var path=[];
-	var current=start_pos_id;
-	var next=-1;
-
-	while(current!=end_pos_id)
+	
+	if(start_pos_id==end_pos_id)
 	{
-		var neibourids=getneibourids(gametype.width,gametype.height,current);
-		next=-1;
-		for(i in neibourids)
-		{
-			var temp_pos_id=neibourids[i];
-			var temp_pos_landform_id=gameinfo.map.landform[temp_pos_id];
-			var temp_pos_landform=defaultDataManager.get_d_landform(temp_pos_landform_id);
-			if(temp_pos_landform_id!=3)
-			{
-				if(next!=-1)
-				{
-					var next_landform=defaultDataManager.get_d_landform(gameinfo.map.landform[next]);
-					if(temp_pos_landform.cost<next_landform.cost)
-					{
-						next=temp_pos_id;
-					}
+		return [end_pos_id];
+	}
 
-				}
-				else
+	var path=[];
+
+
+	var open_dic={}
+	var close_dic={};
+
+	var start_h=distance(gameinfo,start_pos_id,end_pos_id);
+	open_dic[start_pos_id]={
+		pos_id:start_pos_id,
+		parent_pos_id:start_pos_id,
+		g:0,
+		h:start_h,
+		f:start_h
+	};
+
+	var circle_count=0;
+	do{
+		// console.log(1);
+		// console.log('open_dic');
+		// console.log(open_dic);
+		// console.log('close_dic');
+		// console.log(close_dic);
+		if(circle_count>200)
+		{
+			console.log('too many circle!!')
+			return [];
+		}
+		circle_count++;
+		// i++;
+		var current_pos_id=find_min_f_pos(gameinfo,open_dic,start_pos_id,end_pos_id);
+		if(!current_pos_id)
+		{
+			console.log('can not find path')
+			return path;
+		}
+		close_dic[current_pos_id]=open_dic[current_pos_id];
+		delete open_dic[current_pos_id];
+		// console.log(2);
+		// console.log('open_dic');
+		// console.log(open_dic);
+		// console.log('close_dic');
+		// console.log(close_dic);
+
+		var current_neibours=getneibourids(gametype.width,gametype.height,current_pos_id);
+		// console.log(current_pos_id)
+		// console.log(current_neibours)
+		for(i in current_neibours)
+		{
+			var neibourid=current_neibours[i];
+			// console.log('test')
+			// console.log(close_dic[current_pos_id].g);
+			// console.log(gameinfo.map.landform[neibourid].cost)
+			var neibour_g=close_dic[current_pos_id].g+defaultDataManager.get_d_landform(gameinfo.map.landform[neibourid]).cost;
+			var neibour_h=distance(gameinfo,start_pos_id,end_pos_id);
+			if(gameinfo.map.landform[neibourid]==3||!!close_dic[neibourid])
+			{
+				continue;
+			}
+			else if(!open_dic[neibourid])
+			{
+				
+				open_dic[neibourid]={
+					pos_id:neibourid,
+					parent_pos_id:current_pos_id,
+					g:neibour_g,
+					h:neibour_h,
+					f:neibour_g+neibour_h
+				};
+			}
+			else
+			{
+				if(open_dic[neibourid].g>neibour_g)
 				{
-					next=temp_pos_id;
+					open_dic[neibourid].parent_pos_id=current_pos_id;
+					open_dic[neibourid].g=neibour_g;
+					open_dic[neibourid].f=neibour_g+neibour_h;
 				}
 			}
 		}
-		if(next!=-1)
-		{
-			path.push(next);
-			current=next;
-		}
+	}while(!open_dic[end_pos_id])
 
+	
+
+	var current_reverse_pos_id=end_pos_id;
+	var reverse_path=[end_pos_id];
+	var j=0;
+	while(true)
+	{
+		if(j>200)
+		{
+			console.log('too many j circle');
+		}
+		
+		j++;
+		var temp_parent_pos_id=get_parent_pos_id(current_reverse_pos_id,open_dic,close_dic);
+		if(temp_parent_pos_id==start_pos_id)
+		{
+			break;
+		}
+		reverse_path.push(temp_parent_pos_id);
+		current_reverse_pos_id=temp_parent_pos_id;
 	}
 
-	return path;
+	reverse_path.reverse();
+	console.log(reverse_path);
+	return reverse_path;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// var current=start_pos_id;
+	// var current_value=0;
+	// var next=-1;
+
+	// while(current!=end_pos_id)
+	// {
+	// 	var neibourids=getneibourids(gametype.width,gametype.height,current);
+	// 	next=-1;
+	// 	for(i in neibourids)
+	// 	{
+	// 		var temp_pos_id=neibourids[i];
+	// 		var temp_pos_landform_id=gameinfo.map.landform[temp_pos_id];
+	// 		var temp_pos_landform=defaultDataManager.get_d_landform(temp_pos_landform_id);
+	// 		if(temp_pos_landform_id!=3)
+	// 		{
+	// 			if(next!=-1)
+	// 			{
+	// 				var next_landform=defaultDataManager.get_d_landform(gameinfo.map.landform[next]);
+	// 				var next_value=temp_pos_landform.cost+distance(gameinfo,temp_pos_id,end_pos_id);
+	// 				if(next_value<current_value)
+	// 				{
+	// 					next=temp_pos_id;
+	// 					current_value=next_value;
+	// 				}
+
+	// 			}
+	// 			else
+	// 			{
+	// 				next=temp_pos_id;
+	// 				current_value=temp_pos_landform.cost+distance(gameinfo,temp_pos_id,end_pos_id);
+	// 			}
+	// 		}
+	// 	}
+	// 	if(next!=-1)
+	// 	{
+	// 		path.push(next);
+	// 		current=next;
+	// 	}
+
+	// }
+
+	// return path;
 
 }
 
-var heuristic=function(gameinfo,start_pos_id,end_pos_id,mid_pos_id)
+var find_min_f_pos=function(gameinfo,open_dic,start_pos_id,end_pos_id)
 {
-	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
-	var start=getxy(gametype.game.width,start_pos_id);
-	var end=getxy(gametype.game.width,end_pos_id);
-	var mid=getxy(gametype.game.width,mid_pos_id);
+	if(Object.keys(open_dic).length==0)
+	{
+		return;
+	}
+	var min_f;
+	var min_f_pos_id;
+	for(pos_id in open_dic)
+	{
+		var f=defaultDataManager.get_d_landform(gameinfo.map.landform[pos_id]).cost+distance(gameinfo,pos_id,end_pos_id)
+		if(!min_f)
+		{
+			min_f=f;
+			min_f_pos_id=pos_id;
+		}
+		else if(f<min_f)
+		{
+			min_f=f;
+			min_f_pos_id=pos_id;
+		}
+	}
 
-	var dx1=mid.x-end.x;
-	var dy1=mid.y-end.y;
-	var dx2=start.x-end.x;
-	var dy2=start.y-end.y;
-
-	var cross=Math.abs(dx1 * dy2 - dx2 * dy1);
-
-	return distance(gameinfo,mid_pos_id,end_pos_id)+cross*0.001;
+	return min_f_pos_id;
 }
+
+var get_parent_pos_id=function(pos_id,open_dic,close_dic)
+{
+	if(!!open_dic[pos_id])
+	{
+		return open_dic[pos_id].parent_pos_id;
+	}
+	if(!!close_dic[pos_id])
+	{
+		return close_dic[pos_id].parent_pos_id;
+	}
+}
+
+// var heuristic=function(gameinfo,start_pos_id,end_pos_id,mid_pos_id)
+// {
+// 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+// 	var start=getxy(gametype.game.width,start_pos_id);
+// 	var end=getxy(gametype.game.width,end_pos_id);
+// 	var mid=getxy(gametype.game.width,mid_pos_id);
+
+// 	var dx1=mid.x-end.x;
+// 	var dy1=mid.y-end.y;
+// 	var dx2=start.x-end.x;
+// 	var dy2=start.y-end.y;
+
+// 	var cross=Math.abs(dx1 * dy2 - dx2 * dy1);
+
+// 	return distance(gameinfo,mid_pos_id,end_pos_id)+cross*0.001;
+// }
 
 
 var distance=function(gameinfo,start_pos_id,end_pos_id)
 {
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
-	var start=getxy(gametype.game.width,start_pos_id);
-	var end=getxy(gametype.game.width,end_pos_id);
+	var start=getxy(gametype.width,start_pos_id);
+	var end=getxy(gametype.width,end_pos_id);
 
 	var x1,y1,z1,x2,y2,z2;
 

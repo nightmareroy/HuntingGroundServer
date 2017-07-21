@@ -85,12 +85,12 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			var random_l=Math.random();
 			var random_r=Math.random();
 			var random_m=Math.random();
-			if(random_l>0.4)
+			if(random_l>0.3)
 			{
 				//平地
 				gameinfo.map.landform.push(1);
 			}
-			else if(random_l>0.2)
+			else if(random_l>0.1)
 			{
 				//丘陵
 				gameinfo.map.landform.push(2);
@@ -103,12 +103,12 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 
 			if(gameinfo.map.landform[i]!=3)
 			{
-				if(random_r<0.6)
+				if(random_r<0.7)
 				{
 					//无资源
 					gameinfo.map.resource.push(1);
 				}
-				else if(random_r<0.8)
+				else if(random_r<0.85)
 				{
 					//香蕉树
 					gameinfo.map.resource.push(2);
@@ -156,6 +156,47 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 		}
 			
 			
+	}
+
+	//生成密林点
+	gameinfo.map.forests=[];
+	for(var i=0;i<10;i++)
+	{
+		var random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
+		gameinfo.map.forests.push(random_pos_id);
+		if(gameinfo.map.landform[random_pos_id]==3)
+		{
+			gameinfo.map.landform[random_pos_id]=2;
+			gameinfo.map.resource[random_pos_id]=2;
+			for(var j=1;j<=3;j++)
+			{
+				var circle_ids=maplib.get_circle_ids(gameinfo,random_pos_id,j);
+				for(k in circle_ids)
+				{
+					var circle_id=circle_ids[k];
+					var change;
+					switch(circle_id)
+					{
+						case 1:
+							change=Math.random()>0.2?true:false;
+							break;
+						case 2:
+							change=Math.random()>0.5?true:false;
+							break;
+						case 3:
+							change=Math.random()>0.8?true:false;
+							break;
+
+					}
+					if(gameinfo.map.landform[circle_id]!=3&&change)
+					{
+						gameinfo.map.resource[circle_id]=2;
+					}
+					
+				}
+			}
+		}
+		
 	}
 
 	//roles
@@ -223,6 +264,8 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			player.map.resource.push(0);
 			player.map.meat.push(0);
 		}
+
+		
 
 		//单人游戏，添加临时食谱，以及临时解锁指令
 		if(gametype.gametype_id==1)
@@ -321,32 +364,107 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			break;
 		case 4:
 			var pos_ids=[];
+			// var j=0;
 			for(uid in gameinfo.players)
 			{
-				//father
-				var random_pos_id;
-				do
+				// j++;
+				//玩家
+				if(uid>0)
 				{
-					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
-				}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
-				pos_ids.push(random_pos_id);
-				var father=gamelib.create_role(gameinfo,uid,3,random_pos_id);
-				//son
-				var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
-				var neibourid;
-				for(i in neibourids)
-				{
-					neibourid=neibourids[i];
-					if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+					//father
+					var random_pos_id;
+					do
 					{
-						break;
+						random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
+					}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
+					pos_ids.push(random_pos_id);
+					var father=gamelib.create_role(gameinfo,uid,3,random_pos_id);
+					//son
+					var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
+					var neibourid;
+					for(i in neibourids)
+					{
+						neibourid=neibourids[i];
+						if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+						{
+							break;
+						}
+					}
+					var son=gamelib.create_role(gameinfo,uid,4,neibourid);
+				}
+				//猩猩家
+				else if(uid==-1)
+				{
+					for(var j=0;j<1;j++)
+					{
+						//father
+						var random_pos_id;
+						do
+						{
+							random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
+						}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
+						pos_ids.push(random_pos_id);
+						var father=gamelib.create_role(gameinfo,uid,3,random_pos_id);
+						gameinfo.map.resource[random_pos_id]=2;
+						var home=gamelib.create_building(gameinfo,uid,1,random_pos_id);
+						//son
+						var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
+						var neibourid;
+						for(i in neibourids)
+						{
+							neibourid=neibourids[i];
+							if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+							{
+								break;
+							}
+						}
+						var son=gamelib.create_role(gameinfo,uid,4,neibourid);
+					}
+						
+				}
+				//棕熊家
+				else if(uid==-2)
+				{
+					
+					for(var j=0;j<1;j++)
+					{
+						//father
+						var random_pos_id;
+						do
+						{
+							random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
+						}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
+						pos_ids.push(random_pos_id);
+						var father=gamelib.create_role(gameinfo,uid,7,random_pos_id);
+						gameinfo.map.resource[random_pos_id]=2;
+						var home=gamelib.create_building(gameinfo,uid,1,random_pos_id);
+						// //son
+						// var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
+						// var neibourid;
+						// for(i in neibourids)
+						// {
+						// 	neibourid=neibourids[i];
+						// 	if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+						// 	{
+						// 		break;
+						// 	}
+						// }
+						// var son=gamelib.create_role(gameinfo,uid,4,neibourid);
 					}
 				}
-				var son=gamelib.create_role(gameinfo,uid,4,neibourid);
+					
 
 			}
 			break;
 	}
+
+	//初始化用户buildings
+	for(uid in gameinfo.players)
+	{
+
+		maplib.get_buildings_modefied_of_player(uid,gameinfo);
+	}
+		
 
 	// console.log(gameinfo)
 	cb(gameinfo);
@@ -489,15 +607,14 @@ GamedataRemote.prototype.CheckNextTurn=function(creator_id,uid,direction,directi
 //执行游戏回合,返回行动列表
 GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamechannel_sid,timeout_sid,callback)
 {
-	// console.log(creator_id)
 	var gameinfo=gamedic[creator_id];
 	// console.log(gameinfo)
 	//执行指令
 	var result=gamelib.executedirection(gameinfo);
-
 	if(result.gameover)
 	{
 		delete gamedic[creator_id];
+
 	}
 	// cb({
 	// 	uid:uid,
@@ -505,10 +622,11 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 	// 	gameover:result.gameover
 	// });
 
-
+	
 	this.app.rpc.timeout.timeoutRemote.update_time(timeout_sid,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
 		gameinfo.game.nexttime=nexttime;
 		// console.log(result.gameover)
+		// console.log('u t');
 		this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,nexttime,()=>{
 			if(!!result.gameover)
 			{
@@ -647,7 +765,6 @@ GamedataRemote.prototype.LeaveGame=function(creator_id,uid,callback)
 			delete gameinfo.buildings[building_id];
 		}
 	}
-
 	// var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
 	// var all_weight=gamelib.get_all_weight(gameinfo);

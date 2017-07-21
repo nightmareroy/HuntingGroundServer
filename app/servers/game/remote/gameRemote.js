@@ -42,6 +42,7 @@ GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_si
 	});
 
 	funcs.push((cb)=>{
+		// console.log(gameinfo)
 		this.app.rpc.gamechannel.gamechannelRemote.LeaveGameChannel(gamechannel_sid,uid,()=>{
 			cb();
 		});
@@ -51,7 +52,8 @@ GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_si
 	funcs.push((cb)=>{
 		var gameover=gamelib.get_gameover(gameinfo);
 		// 
-		// console.log(gameover)
+		console.log('gameover:')
+		console.log(gameover)
 		if(!!gameover)
 		{
 			this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,gameinfo.game.creator_id,gameover,()=>{});
