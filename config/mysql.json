@@ -1,6 +1,6 @@
 {
 	"development": {
-	  "host" : "115.159.186.242",
+	  "host" : "10.66.243.169",
 		"port" : "3306",
 		"database" : "huntingground_db",
 		"user" : "root",
@@ -8,7 +8,7 @@
 	},
 
 	"production": {
-	  "host" : "115.159.186.242",
+	  "host" : "10.66.243.169",
 		"port" : "3306",
 		"database" : "huntingground_db",
 		"user" : "root",
