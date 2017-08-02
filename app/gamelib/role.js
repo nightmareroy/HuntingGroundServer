@@ -307,26 +307,25 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 	{
 		var skill_did=role.skill_id_list[i];
 		var skill=defaultDataManager.get_d_skill(skill_did);
-		for(i in skill.properties)
+		for(i in skill.keys)
 		{
-			var key=skill.properties[i];
-			var value=skill.params[i];
+			var key=skill.keys[i];
+			var value=skill.values[i];
 			property[key]+=value;
 		}
 		
 	}
 
-
 	//生成高级数据
 	
 	property.weight=property.muscle+property.fat;
 
-	// property.blood_sugar_max=Math.round(property.weight/2);
+	property.blood_sugar_max=Math.round(property.weight/3);
 
 	property.health=property.blood_sugar/property.blood_sugar_max;
 
 
-	// property.attack=property.muscle;
+	property.attack=property.muscle*property.health*0.1;
 	// property.defence=Math.round(property.weight/2);
 	
 
@@ -346,14 +345,18 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 
 
 	property.max_move=4*(0+property.health*1)*property.muscle/property.weight;
+	if(property.fast_move>0)
+	{
+		property.max_move+=0.5;
+	}
 
 
 	property.now_grow_state=0;
-	if(property.old<1000)
+	if(property.old<2000)
 	{
 		property.now_grow_state=0;
 	}
-	else if(property.old<2000)
+	else if(property.old<4000)
 	{
 		property.now_grow_state=1;
 	}
@@ -366,7 +369,7 @@ exports.get_role_all_property=function(role_id,gameinfo)//game_total_role,game_t
 
 	// property.move=Math.ceil(property.health*property.muscle/property.weight*2);
 	
-	property.basal_metabolism=Math.round(property.muscle*0.09+property.fat*0.03);
+	property.basal_metabolism=Math.round(property.muscle*0.03+property.fat*0.01);
 
 	property.lipase=property.basal_metabolism*(2-property.health);
 

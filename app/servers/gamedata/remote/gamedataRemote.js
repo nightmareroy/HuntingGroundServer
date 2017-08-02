@@ -27,8 +27,9 @@ var defaultDataManager=pomelo.app.get('defaultDataManager');
 var uuid=require('uuid');
 
 //	gamedic:
-//	creator_id:
+//	game_id:
 //		'game':
+//			'game_id':
 //			'creator_id':
 //			'game_name':
 //			'gametype_id':
@@ -58,7 +59,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
 
-	gamedic[gameinfo.game.creator_id]=gameinfo;
+	gamedic[gameinfo.game.game_id]=gameinfo;
 	gameinfo.game.current_turn=1;
 	// gameinfo.game.win_condition="30回合内达到1000总体重";
 	gameinfo.map={
@@ -79,6 +80,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 	//map
 	for(var i=0;i<gametype.width*gametype.height;i++)
 	{
+
 		//1v1对战，PvE对战,自动生成地图
 		if(gametype.gametype_id==2||gametype.gametype_id==4)
 		{
@@ -110,7 +112,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 				}
 				else if(random_r<0.85)
 				{
-					//香蕉树
+					//树林
 					gameinfo.map.resource.push(2);
 				}
 				else
@@ -126,25 +128,46 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			}
 
 			//肉图的id需要乘以100，前两位作为存在的回合数
-			// var d_meat=defaultDataManager.get_d_meat()
-			// if(random_m>0.85)
-			// {
-			// 	//白蚁
-			// 	var d_meat=defaultDataManager.get_d_meat(3);
-			// 	gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
-			// }
-			// else if(random_m>0.75)
-			// {
-			// 	//鸟蛋
-			// 	var d_meat=defaultDataManager.get_d_meat(5);
-			// 	gameinfo.map.meat.push(d_meat.meat_id*100+d_meat.last_turn);
-			// }
-			// else
-			// {
-			// 	//无
-			// 	gameinfo.map.meat.push(100);
-			// }
-			gameinfo.map.meat.push(100);
+			// var d_meat=defaultDataManager.get_d_meat();
+			if(gameinfo.map.landform[i]!=3)
+			{
+				if(random_m>0.2)
+				{
+					//无
+					gameinfo.map.meat.push(100);
+				}
+				else if(random_m>0.15&&gameinfo.map.resource[i]==2)
+				{
+					//香蕉
+					gameinfo.map.meat.push(300);
+				}
+				else if(random_m>0.1)
+				{
+					//白蚁
+					gameinfo.map.meat.push(400);
+				}
+				else if(random_m>0.05&&gameinfo.map.resource[i]==2)
+				{
+					//鸟蛋
+					gameinfo.map.meat.push(500);
+				}
+				else if(gameinfo.map.resource[i]==2)
+				{
+					//蜂蜜
+					gameinfo.map.meat.push(600);
+				}
+				else
+				{
+					//无
+					gameinfo.map.meat.push(100);
+				}
+			}
+			else
+			{
+				//无
+				gameinfo.map.meat.push(100);
+			}
+				
 		}
 		//单人游戏，读取地图
 		else if(gametype.gametype_id==1)
@@ -163,11 +186,12 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 	for(var i=0;i<10;i++)
 	{
 		var random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
+		var random_pos_ids=[random_pos_id];
 		gameinfo.map.forests.push(random_pos_id);
 		if(gameinfo.map.landform[random_pos_id]==3)
 		{
 			gameinfo.map.landform[random_pos_id]=2;
-			gameinfo.map.resource[random_pos_id]=2;
+			// gameinfo.map.resource[random_pos_id]=2;
 			for(var j=1;j<=3;j++)
 			{
 				var circle_ids=maplib.get_circle_ids(gameinfo,random_pos_id,j);
@@ -190,10 +214,46 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 					}
 					if(gameinfo.map.landform[circle_id]!=3&&change)
 					{
-						gameinfo.map.resource[circle_id]=2;
+						random_pos_ids.push(random_pos_id);
+						// gameinfo.map.resource[circle_id]=2;
 					}
 					
 				}
+			}
+
+			//变更成森林，并增加肉
+			for(j in random_pos_ids)
+			{
+				var r_pos_id=random_pos_ids[j];
+				gameinfo.map.resource[r_pos_id]=2;
+
+				if(gameinfo.map.meat[r_pos_id]==100)
+				{
+					var random_m=Math.random();
+					if(random_m>0.15)
+					{
+						//香蕉
+						gameinfo.map.meat[r_pos_id]=300;
+					}
+					else if(random_m>0.1)
+					{
+						//白蚁
+						gameinfo.map.meat[r_pos_id]=400;;
+					}
+					else if(random_m>0.05)
+					{
+						//鸟蛋
+						gameinfo.map.meat[r_pos_id]=500;;
+					}
+					else
+					{
+						//蜂蜜
+						gameinfo.map.meat[r_pos_id]=600;;
+					}
+				}
+
+					
+
 			}
 		}
 		
@@ -213,9 +273,12 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 		player.direction_turn=0;
 		if(gametype.gametype_id==2)
 		{
-			player.banana=0;
 			player.meat=0;
-			player.branch=0;
+			player.banana=0;
+			player.ant=0;
+			player.egg=0;
+			player.honey=0;
+			// player.branch=0;
 			player.builing_home_count=0;
 		}
 		//单人游戏
@@ -231,9 +294,11 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 		//pve游戏
 		else if(gametype.gametype_id==4)
 		{
-			player.banana=0;
 			player.meat=0;
-			player.branch=0;
+			player.banana=0;
+			player.ant=0;
+			player.egg=0;
+			player.honey=0;
 			player.builing_home_count=0;
 		}
 			
@@ -300,8 +365,8 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 			switch(gameinfo.game.progress_id)
 			{
 				case 1:
-					var father=gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)-11);
-					// var son=gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+6);
+					var father=gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)-11);
+					// var son=gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+6);
 					// father.role.blood_sugar=100;
 					// father.role.blood_sugar_max=100;
 					// father.role.old=1000;
@@ -311,26 +376,26 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 					// son.role.old=0;
 					// son.role.muscle=100;
 
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+7);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+8);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+9);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+10);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+11);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+12);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+13);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+14);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+15);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+16);
-					// gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+17);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+7);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+8);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+9);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+10);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+11);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+12);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+13);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+14);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+15);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+16);
+					// gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+17);
 					break;
 				case 2:
-					gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)-11);
+					gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)-11);
 					break;
 				case 3:
-					gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)-11);
+					gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)-11);
 					break;
 				case 4:
-					gamelib.create_role(gameinfo,gameinfo.game.creator_id,2,Math.floor(gametype.width*gametype.height/2)+9);
+					gamelib.create_role(gameinfo,gameinfo.game.game_id,2,Math.floor(gametype.width*gametype.height/2)+9);
 					break;
 			}
 			break;
@@ -345,20 +410,45 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
 				}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
 				pos_ids.push(random_pos_id);
-				var father=gamelib.create_role(gameinfo,uid,2,random_pos_id);
-
-				//son
+				var father=gamelib.create_role(gameinfo,uid,3,random_pos_id);
+				//mother
 				var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
 				var neibourid;
-				for(i in neibourids)
+				var count=0;
+				do
 				{
-					neibourid=neibourids[i];
-					if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+					neibourid=neibourids[Math.floor(Math.random()*neibourids.length)];
+					if(pos_ids.indexOf(neibourid)==-1)
 					{
+						if(gameinfo.map.landform[neibourid]==3)
+						{
+							gameinfo.map.landform[neibourid]=2;
+						}
 						break;
 					}
+					count++;
 				}
-				var son=gamelib.create_role(gameinfo,uid,2,neibourid);
+				while(count<20)
+				var mother=gamelib.create_role(gameinfo,uid,5,neibourid);
+				pos_ids.push(neibourid);
+				//son
+				neibourid;
+				count=0;
+				do
+				{
+					neibourid=neibourids[Math.floor(Math.random()*neibourids.length)];
+					if(pos_ids.indexOf(neibourid)==-1)
+					{
+						if(gameinfo.map.landform[neibourid]==3)
+						{
+							gameinfo.map.landform[neibourid]=2;
+						}
+						break;
+					}
+					count++;
+				}
+				while(count<20)
+				var son=gamelib.create_role(gameinfo,uid,4,neibourid);
 
 			}
 			break;
@@ -379,21 +469,47 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 					}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
 					pos_ids.push(random_pos_id);
 					var father=gamelib.create_role(gameinfo,uid,3,random_pos_id);
-					//son
+					//mother
 					var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
 					var neibourid;
-					for(i in neibourids)
+					var count=0;
+					do
 					{
-						neibourid=neibourids[i];
-						if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+						neibourid=neibourids[Math.floor(Math.random()*neibourids.length)];
+						if(pos_ids.indexOf(neibourid)==-1)
 						{
+							if(gameinfo.map.landform[neibourid]==3)
+							{
+								gameinfo.map.landform[neibourid]=2;
+							}
 							break;
 						}
+						count++;
 					}
+					while(count<20)
+					var mother=gamelib.create_role(gameinfo,uid,5,neibourid);
+					pos_ids.push(neibourid);
+					//son
+					neibourid;
+					count=0;
+					do
+					{
+						neibourid=neibourids[Math.floor(Math.random()*neibourids.length)];
+						if(pos_ids.indexOf(neibourid)==-1)
+						{
+							if(gameinfo.map.landform[neibourid]==3)
+							{
+								gameinfo.map.landform[neibourid]=2;
+							}
+							break;
+						}
+						count++;
+					}
+					while(count<20)
 					var son=gamelib.create_role(gameinfo,uid,4,neibourid);
 				}
 				//猩猩家
-				else if(uid==-1)
+				else if(uid==-1||uid==-2)
 				{
 					for(var j=0;j<1;j++)
 					{
@@ -405,25 +521,50 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 						}while(pos_ids.indexOf(random_pos_id)!=-1||!maplib.get_pos_movable(random_pos_id,gameinfo))
 						pos_ids.push(random_pos_id);
 						var father=gamelib.create_role(gameinfo,uid,3,random_pos_id);
-						gameinfo.map.resource[random_pos_id]=2;
-						var home=gamelib.create_building(gameinfo,uid,1,random_pos_id);
-						//son
+						//mother
 						var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
 						var neibourid;
-						for(i in neibourids)
+						var count=0;
+						do
 						{
-							neibourid=neibourids[i];
-							if(pos_ids.indexOf(neibourid)==-1&&maplib.get_pos_movable(neibourid,gameinfo))
+							neibourid=neibourids[Math.floor(Math.random()*neibourids.length)];
+							if(pos_ids.indexOf(neibourid)==-1)
 							{
+								if(gameinfo.map.landform[neibourid]==3)
+								{
+									gameinfo.map.landform[neibourid]=2;
+								}
 								break;
 							}
+							count++;
 						}
+						while(count<20)
+						var mother=gamelib.create_role(gameinfo,uid,5,neibourid);
+						pos_ids.push(neibourid);
+						//son
+						neibourid;
+						count=0;
+						do
+						{
+							neibourid=neibourids[Math.floor(Math.random()*neibourids.length)];
+							if(pos_ids.indexOf(neibourid)==-1)
+							{
+								if(gameinfo.map.landform[neibourid]==3)
+								{
+									gameinfo.map.landform[neibourid]=2;
+								}
+								break;
+							}
+							count++;
+						}
+						while(count<20)
 						var son=gamelib.create_role(gameinfo,uid,4,neibourid);
+						// var home=gamelib.create_building(gameinfo,uid,1,neibourid);
 					}
 						
 				}
 				//棕熊家
-				else if(uid==-2)
+				else if(uid==-101)
 				{
 					
 					for(var j=0;j<1;j++)
@@ -437,7 +578,7 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 						pos_ids.push(random_pos_id);
 						var father=gamelib.create_role(gameinfo,uid,7,random_pos_id);
 						gameinfo.map.resource[random_pos_id]=2;
-						var home=gamelib.create_building(gameinfo,uid,1,random_pos_id);
+						// var home=gamelib.create_building(gameinfo,uid,1,random_pos_id);
 						// //son
 						// var neibourids=maplib.get_neibour_ids(gameinfo,random_pos_id);
 						// var neibourid;
@@ -472,9 +613,9 @@ GamedataRemote.prototype.CreateGame=function(gameinfo,cb)
 }
 
 //获取用户游戏数据
-GamedataRemote.prototype.GetUserGameInfo=function(creator_id,uid,cb)
+GamedataRemote.prototype.GetUserGameInfo=function(game_id,uid,cb)
 {
-	var gameinfo=gamedic[creator_id];
+	var gameinfo=gamedic[game_id];
 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
 	var gameinfo_user={};
@@ -529,25 +670,25 @@ GamedataRemote.prototype.GetUserGameInfo=function(creator_id,uid,cb)
 }
 
 //获取游戏数据
-GamedataRemote.prototype.GetGameInfo=function(creator_id,cb)
+GamedataRemote.prototype.GetGameInfo=function(game_id,cb)
 {
-	var gameinfo=gamedic[creator_id];
+	var gameinfo=gamedic[game_id];
 	cb(gameinfo);
 }
 
 // //返回游戏数据，加入游戏频道
-// GamedataRemote.prototype.LoadGame=function(uid,creator_id,cb)
+// GamedataRemote.prototype.LoadGame=function(uid,game_id,cb)
 // {
 
 // 	var roles_in_sightzoon=maplib.get_roles_in_sightzoon_of_player(uid,game_total_role,game_total_map,gametype);
 
-// 	cb(gamedic[creator_id]);
+// 	cb(gamedic[game_id]);
 // }
 
-//执行游戏回合,返回行动列表
-GamedataRemote.prototype.CheckNextTurn=function(creator_id,uid,direction,direction_turn,cb)
+//检测所有用户指令状态
+GamedataRemote.prototype.CheckNextTurn=function(game_id,uid,direction,direction_turn,cb)
 {
-	var gameinfo=gamedic[creator_id];
+	var gameinfo=gamedic[game_id];
 
 	//检测输入
 	if(!input_check(gameinfo,direction,direction_turn))
@@ -605,15 +746,15 @@ GamedataRemote.prototype.CheckNextTurn=function(creator_id,uid,direction,directi
 
 
 //执行游戏回合,返回行动列表
-GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamechannel_sid,timeout_sid,callback)
+GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,game_id,gamechannel_sid,timeout_sid,callback)
 {
-	var gameinfo=gamedic[creator_id];
+	var gameinfo=gamedic[game_id];
 	// console.log(gameinfo)
 	//执行指令
 	var result=gamelib.executedirection(gameinfo);
 	if(result.gameover)
 	{
-		delete gamedic[creator_id];
+		delete gamedic[game_id];
 
 	}
 	// cb({
@@ -623,11 +764,11 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 	// });
 
 	
-	this.app.rpc.timeout.timeoutRemote.update_time(timeout_sid,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+	this.app.rpc.timeout.timeoutRemote.update_time(timeout_sid,game_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
 		gameinfo.game.nexttime=nexttime;
 		// console.log(result.gameover)
 		// console.log('u t');
-		this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,nexttime,()=>{
+		this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,game_id,result.action_list_dic,nexttime,()=>{
 			if(!!result.gameover)
 			{
 				var user;
@@ -647,18 +788,18 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 					});
 				});
 				funcs.push((cb)=>{
-					this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
+					this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,game_id,result.gameover,()=>{
 						cb();
 					});
 				});
 				funcs.push((cb)=>{
-					this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,creator_id,()=>{
+					this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,game_id,()=>{
 						cb();
 					});
 				});
 				funcs.push((cb)=>{
 					sql="select * from user where uid =?";
-					connection.query(sql,creator_id,(err,rows)=>{
+					connection.query(sql,game_id,(err,rows)=>{
 						user=rows[0];
 						cb(err);
 					});
@@ -668,7 +809,7 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 					if(gameinfo.game.gametype_id==1&&result.gameover.result.winner_groups.length>0&&user.single_game_progress==gameinfo.game.progress_id&&gameinfo.game.progress_id!=defaultDataManager.get_d_single_game_info_max_progress())
 					{
 						sql="update user set single_game_progress=single_game_progress+1 where uid =?";
-						connection.query(sql,creator_id,(err,rows)=>{
+						connection.query(sql,game_id,(err,rows)=>{
 							cb(err);
 						});
 					}
@@ -699,8 +840,8 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 				});
 
 
-				// this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
-				// 	this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,creator_id,()=>{
+				// this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,game_id,result.gameover,()=>{
+				// 	this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,game_id,()=>{
 				// 		callback();
 				// 	});
 				// });
@@ -724,9 +865,9 @@ GamedataRemote.prototype.ExecuteDirection=function(gamedata_sid,creator_id,gamec
 }
 
 //执行游戏回合,返回行动列表
-GamedataRemote.prototype.SubTurn=function(creator_id,uid,role_id,direction_did,direction_param,cb)
+GamedataRemote.prototype.SubTurn=function(game_id,uid,role_id,direction_did,direction_param,cb)
 {
-	var gameinfo=gamedic[creator_id];
+	var gameinfo=gamedic[game_id];
 
 	//检测输入
 	// if(!input_check(gameinfo,direction,direction_turn))
@@ -745,9 +886,9 @@ GamedataRemote.prototype.SubTurn=function(creator_id,uid,role_id,direction_did,d
 }
 
 //离开当前游戏
-GamedataRemote.prototype.LeaveGame=function(creator_id,uid,callback)
+GamedataRemote.prototype.LeaveGame=function(game_id,uid,callback)
 {
-	var gameinfo=gamedic[creator_id];
+	var gameinfo=gamedic[game_id];
 	//删数据
 	// delete gameinfo.players[uid];
 	// gameinfo.players[uid].failed=true;

@@ -43,6 +43,13 @@ exports.executedirection=function(gameinfo)
 	}
 	var step=-1;
 
+	// for(role_id in gameinfo.roles)
+	// {
+	// 	var role=gameinfo.roles[role_id];
+	// 	console.log(role.name)
+	// 	console.log(role.direction_did)
+	// }
+
 
 	var move_roles=[];
 	// var temp_role_list;
@@ -131,10 +138,13 @@ exports.executedirection=function(gameinfo)
 					direction_did:1,
 					// direction_param:[],
 
-					//这三个仅用于发送给前端播放动画用
-					banana:0,
+					//这几个仅用于发送给前端播放动画用
 					meat:0,
-					branch:0
+					banana:0,
+					ant:0,
+					egg:0,
+					honey:0
+					// branch:0
 					// younger_left:0,
 					// growup_left:0,
 					// younger_left_max:0,
@@ -211,12 +221,13 @@ exports.executedirection=function(gameinfo)
 						{
 							//执行移动
 							next_pos=role.direction_param.shift();
-							if(maplib.do_role_move(role.role_id,role.pos_id,next_pos,gameinfo))
+							var cost=maplib.do_role_move(role.role_id,role.pos_id,next_pos,gameinfo)
+							if(!!cost)
 							{
 								
 								var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
 								// gameinfo.players[role.uid].activity+=role_all_property.weight;
-								role.modified_property.blood_sugar-=role_all_property.basal_metabolism;
+								role.modified_property.blood_sugar-=role_all_property.basal_metabolism*cost;
 								// role.modified_property.muscle+=1;
 								// role.modified_property.lipase+=1;
 								some_role_moved=true;
@@ -294,7 +305,7 @@ exports.executedirection=function(gameinfo)
 				//新添加两个临时变量，攻击回合结束时要删除
 				// role.enemy_count= Object.keys(enemies).length;
 				role.enemies=enemies;
-				role.all_damage=0;
+				// role.all_damage=0;
 			}
 			for(role_id in gameinfo.roles)
 			{
@@ -309,8 +320,17 @@ exports.executedirection=function(gameinfo)
 					{
 						var role_t=role.enemies.roles[role_id_t];
 						var role_t_all_property=rolelib.get_role_all_property(role_t.role_id,gameinfo);
-						var damage=role_all_property.muscle*role_all_property.health*(role.weapon_type_id==0?1:1.2)*1000/role_t_all_property.weight/(role_t.direction_did==2?2:1);
+						var damage=role_all_property.attack*(role.weapon_type_id==0?1:1.2)*(role.ferocious>0?1.2:1)*(role_t.direction_did==2?0.5:1)*(role_t.pachydermia>0?0.8:1);
 						// var damage=role_all_property.attack-role_t_all_property.defence;
+
+						// console.log('damage')
+						// console.log(damage)
+						// console.log(role_all_property.muscle)
+						// console.log((role.weapon_type_id==0?1:1.2))
+						// console.log((role.ferocious>0?1.2:1))
+						// console.log(role_all_property.health)
+						// console.log((role_t.direction_did==2?0.5:1))
+						// console.log((role_t.pachydermia>0?0.8:1))
 
 						
 
@@ -319,7 +339,7 @@ exports.executedirection=function(gameinfo)
 						// gameinfo.players[role.uid].activity+=damage;
 						// gameinfo.players[role_t.uid].activity+=damage;
 						// role_t.modified_property.blood_sugar-=damage;
-						role_t.all_damage+=damage;
+						role_t.modified_property.blood_sugar-=damage;
 						// role_t.attacked=1;
 
 					}
@@ -373,20 +393,20 @@ exports.executedirection=function(gameinfo)
 				// delete role.enemies;
 			}
 
-			for(role_id in gameinfo.roles)
-			{
-				var role=gameinfo.roles[role_id];
+			// for(role_id in gameinfo.roles)
+			// {
+			// 	var role=gameinfo.roles[role_id];
 
-				role.all_damage=Math.round(role.all_damage);
-				// if(role.all_damage>role.blood_sugar)
-				// {
-				// 	role.all_damage=role.blood_sugar;
-				// }
+			// 	role.all_damage=Math.round(role.all_damage);
+			// 	// if(role.all_damage>role.blood_sugar)
+			// 	// {
+			// 	// 	role.all_damage=role.blood_sugar;
+			// 	// }
 
 
 				
-				// role.blood_sugar-=role.all_damage;
-			}
+			// 	// role.blood_sugar-=role.all_damage;
+			// }
 
 
 			
@@ -396,17 +416,17 @@ exports.executedirection=function(gameinfo)
 			{
 				if(uid>=0)
 				{
-					action_list_dic[uid][step].damage={};
+					// action_list_dic[uid][step].damage={};
 					action_list_dic[uid][step].attack={};
 					var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);
 					for(i in insight_roles)
 					{
 						var role=gameinfo.roles[insight_roles[i]];
-						if(role.all_damage>0)
-						{
-							action_list_dic[uid][step].damage[role.role_id]=role.all_damage;
+						// if(role.all_damage>0)
+						// {
+						// 	action_list_dic[uid][step].damage[role.role_id]=role.all_damage;
 							
-						}
+						// }
 						if(role.direction_did==1)
 						{
 							switch(role.enemies.type)
@@ -434,12 +454,12 @@ exports.executedirection=function(gameinfo)
 					
 			}
 
-			for(role_id in gameinfo.roles)
-			{
-				var role=gameinfo.roles[role_id];
-				delete role.all_damage;
-				// delete role.enemies;
-			}
+			// for(role_id in gameinfo.roles)
+			// {
+			// 	var role=gameinfo.roles[role_id];
+			// 	delete role.all_damage;
+			// 	// delete role.enemies;
+			// }
 			
 			//部分中间过程
 			
@@ -449,30 +469,30 @@ exports.executedirection=function(gameinfo)
 		else if(step==3)
 		{
 			
-			for(role_id in gameinfo.roles)
-			{
-				var role=gameinfo.roles[role_id];
-				
-				if(role.blood_sugar<=0)
-				{
-					var d_meat=defaultDataManager.get_d_meat(2);
-					gameinfo.map.meat[role.pos_id]=d_meat.meat_id*100+d_meat.last_turn;
-					delete gameinfo.roles[role_id];
+			// for(role_id in gameinfo.roles)
+			// {
+			// 	var role=gameinfo.roles[role_id];
+			// 	if(role.blood_sugar<=0)
+			// 	{
 
-				}
+			// 		var d_meat=defaultDataManager.get_d_meat(2);
+			// 		gameinfo.map.meat[role.pos_id]=d_meat.meat_id*100+d_meat.last_turn;
+			// 		delete gameinfo.roles[role_id];
 
-			}
-			for(uid in gameinfo.players)
-			{
-				if(uid>=0)
-				{
-					var modifies_length=action_list_dic[uid][1].modifies.length;
-					var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][1].modifies[modifies_length-1]);
-					// var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][4]);
-					action_list_dic[uid][step]=modefied_dic;
-				}
+			// 	}
+
+			// }
+			// for(uid in gameinfo.players)
+			// {
+			// 	if(uid>=0)
+			// 	{
+			// 		var modifies_length=action_list_dic[uid][1].modifies.length;
+			// 		var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][1].modifies[modifies_length-1]);
+			// 		// var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][4]);
+			// 		action_list_dic[uid][step]=modefied_dic;
+			// 	}
 					
-			}
+			// }
 
 
 		}
@@ -526,7 +546,8 @@ exports.executedirection=function(gameinfo)
 								{
 									// role.modified_property.direction_did=15;
 									// role.direction_did=15;
-									gameinfo.players[role.uid][d_building.cost_key]-=d_building.cost_value;
+									gameinfo.players[role.uid][d_building.cost_key]-=d_building.cost_value*(gameinfo.players[role.uid].builing_home_count+1);
+									gameinfo.players[role.uid].builing_home_count++;
 									role.modified_property[d_building.cost_key]-=d_building.cost_value;
 								}
 								// gameinfo.players[role.uid].banana-defaultDataManager.get_d_building(1).cost;
@@ -615,9 +636,9 @@ exports.executedirection=function(gameinfo)
 			{
 				if(uid>=0)
 				{
-					// var modifies_length=action_list_dic[uid][1].modifies.length;
+					var modifies_length=action_list_dic[uid][1].modifies.length;
 					// var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][1].modifies[modifies_length-1]);
-					var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][3]);
+					var modefied_dic=gen_modefied_dic(gameinfo,uid,action_list_dic[uid][1].modifies[modifies_length-1]);//gen_modefied_dic(gameinfo,uid,action_list_dic[uid][3]);
 					action_list_dic[uid][step]=modefied_dic;
 				}
 					
@@ -639,7 +660,6 @@ exports.executedirection=function(gameinfo)
 			{
 				var role=gameinfo.roles[role_id];
 				var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
-
 				// if((!!role.enemies&&role.enemies.type==0)&&!role.attack)
 				// {
 					
@@ -649,31 +669,37 @@ exports.executedirection=function(gameinfo)
 						case 2:
 							role.modified_property.blood_sugar-=role_all_property.basal_metabolism;
 							break;
-						//采集水果
-						case 3:
-							// gameinfo.map.resource[role.pos_id]=2;
-							var resource_id=gameinfo.map.resource[role.pos_id];
-							var resourceinfo=defaultDataManager.get_d_resource(resource_id);
-							var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id);
-							var banana=role.inteligent;//resourceinfo.base_food*(role.inteligent<resourceinfo.inteligent_need?role.inteligent/resourceinfo.inteligent_need:1);
-							if(distance!=-1)
-							{
-								banana=banana*(2-distance/10);
-							}
-							banana=Math.round(banana);
-							role.modified_property.banana+=banana;
-							role.modified_property.direction_did=3;
-							gameinfo.players[role.uid].banana+=banana;
+						// //采集水果
+						// case 3:
+						// 	// gameinfo.map.resource[role.pos_id]=2;
+						// 	var resource_id=gameinfo.map.resource[role.pos_id];
+						// 	var resourceinfo=defaultDataManager.get_d_resource(resource_id);
+						// 	var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id);
+						// 	var banana=role.inteligent;//resourceinfo.base_food*(role.inteligent<resourceinfo.inteligent_need?role.inteligent/resourceinfo.inteligent_need:1);
+						// 	if(distance!=-1)
+						// 	{
+						// 		banana=banana*(2-distance/10);
+						// 	}
+						// 	banana=Math.round(banana);
+						// 	role.modified_property.banana+=banana;
+						// 	role.modified_property.direction_did=3;
+						// 	gameinfo.players[role.uid].banana+=banana;
 
-							break;
+						// 	break;
 						//吃料理
 						case 8:
 							var food=defaultDataManager.get_d_food(role.direction_param[0]);
-
-							if(gameinfo.players[role.uid].banana>=food.banana&&gameinfo.players[role.uid].meat>=food.meat)
+							if(gameinfo.players[role.uid].banana>=food.banana&&
+								gameinfo.players[role.uid].meat>=food.meat&&
+								gameinfo.players[role.uid].ant>=food.ant&&
+								gameinfo.players[role.uid].egg>=food.egg&&
+								gameinfo.players[role.uid].honey>=food.honey)
 							{
 								gameinfo.players[role.uid].banana-=food.banana;
 								gameinfo.players[role.uid].meat-=food.meat;
+								gameinfo.players[role.uid].ant-=food.ant;
+								gameinfo.players[role.uid].egg-=food.egg;
+								gameinfo.players[role.uid].honey-=food.honey;
 								// gameinfo.players[role.uid].modified_property.banana-=food.banana;
 								// gameinfo.players[role.uid].modified_property.meat-=food.meat;
 								// role.modified_property.banana-=food.banana;
@@ -732,25 +758,45 @@ exports.executedirection=function(gameinfo)
 									var role_t=gameinfo.roles[role_id_t];
 									var role_t_all_property=rolelib.get_role_all_property(role_id_t,gameinfo);
 
-									var blood_sugar=Math.round(Math.min(role_t_all_property.blood_sugar_max-role_t.blood_sugar,food.carbohydrate*role_t.digest/100/neibour_role_ids.length));
-									var fat=Math.round(food.fat*role_t.digest/100/neibour_role_ids.length);
-
-									var inteligent_benifit=1;
-									if(role_t_all_property.now_grow_state==0)
+									var cooking_benifit=1;
+									if(role.cooking>0)
 									{
-										inteligent_benifit=1.5;
+										cooking_benifit=1.2;
 									}
-									var inteligent=Math.round(food.minerals*role_t.digest*inteligent_benifit/100/neibour_role_ids.length);
 
-									var muscle_benifit=1;
+									// var blood_sugar=Math.round(Math.min(role_t_all_property.blood_sugar_max-role_t.blood_sugar,food.carbohydrate*role_t.digest/1000/neibour_role_ids.length));
+									var blood_sugar=Math.round(cooking_benifit*food.carbohydrate*role_t.digest/1000/neibour_role_ids.length);
+									var fat=Math.round(cooking_benifit*food.fat*role_t.digest/1000/neibour_role_ids.length);
+
+									var inteligent_benifit;
+									var muscle_benifit;
+									switch(role_t_all_property.now_grow_state)
+									{
+										case 0:
+											inteligent_benifit=1.5;
+											muscle_benifit=1;
+											break;
+										case 0:
+											inteligent_benifit=1;
+											muscle_benifit=1.5;
+											break;
+										case 0:
+											inteligent_benifit=0.5;
+											muscle_benifit=0.5;
+											break;
+										
+									}
+									var inteligent=Math.round(cooking_benifit*food.minerals*role_t.digest*inteligent_benifit/1000/neibour_role_ids.length);
+
+									
 									if(role_t_all_property.now_grow_state==1)
 									{
 										muscle_benifit=1.5;
 									}
-									var muscle=Math.round(food.protein*role_t.digest*muscle_benifit/100/neibour_role_ids.length);
+									var muscle=Math.round(cooking_benifit*food.protein*role_t.digest*muscle_benifit/1000/neibour_role_ids.length);
 
-									var digest=Math.round(Math.min(100-role_t.digest,food.dietary_fiber*role_t.digest/100/neibour_role_ids.length));
-									var old=0-Math.round(food.vitamin*role_t.digest/100/neibour_role_ids.length);
+									var digest=Math.round(Math.min(1000-role_t.digest,cooking_benifit*food.dietary_fiber*role_t.digest/1000/neibour_role_ids.length));
+									var old=0-Math.round(cooking_benifit*food.vitamin*role_t.digest/1000/neibour_role_ids.length);
 									var skill={
 										type:0,
 										id:0
@@ -798,6 +844,7 @@ exports.executedirection=function(gameinfo)
 									
 									role_t.modified_property.blood_sugar+=blood_sugar;
 									// role_t.modified_property.blood_sugar_max+=Math.round(blood_sugar/10);
+									role_t.modified_property.muscle+=muscle;
 									role_t.modified_property.fat+=fat;
 									role_t.modified_property.inteligent+=inteligent;
 									// role_t.modified_property.amino_acid+=amino_acid;
@@ -805,13 +852,13 @@ exports.executedirection=function(gameinfo)
 									role_t.modified_property.old+=old;
 									role_t.modified_property.skill=skill;
 
-									role_t.blood_sugar+=blood_sugar;
-									// role_t.blood_sugar_max+=blood_sugar;
-									role_t.fat+=fat;
-									role_t.inteligent+=inteligent;
-									// role_t.amino_acid+=amino_acid;
-									role_t.digest+=digest;
-									role_t.old+=old;
+									// role_t.blood_sugar+=blood_sugar;
+									// // role_t.blood_sugar_max+=blood_sugar;
+									// role_t.fat+=fat;
+									// role_t.inteligent+=inteligent;
+									// // role_t.amino_acid+=amino_acid;
+									// role_t.digest+=digest;
+									// role_t.old+=old;
 									switch(skill.type)
 									{
 										case 1:
@@ -827,45 +874,73 @@ exports.executedirection=function(gameinfo)
 
 							break;
 						
-						//采集生肉
+						//采集
 						case 13:
 							var meat_id_and_value=gameinfo.map.meat[role.pos_id];
 							var meat_id=Math.floor(meat_id_and_value/100);
-							var meatinfo=defaultDataManager.get_d_meat(meat_id);
-							var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id)
-							var meat=role.inteligent;//meatinfo.base_food*(role.inteligent<meatinfo.inteligent_need?role.inteligent/meatinfo.inteligent_need:1);
-							if(distance!=-1)
+							if(meat_id>1)
 							{
-								meat=meat*(2-distance/10);
+								var meatinfo=defaultDataManager.get_d_meat(meat_id);
+								// var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id)
+								// var get_value=role.inteligent;//meatinfo.base_food*(role.inteligent<meatinfo.inteligent_need?role.inteligent/meatinfo.inteligent_need:1);
+								// if(distance!=-1)
+								// {
+								// 	meat=meat*(2-distance/10);
+								// }
+								// get_value=Math.round(get_value);
+								var get_value=role.inteligent;
+								if(role.careful>0)
+								{
+									get_value=get_value*1.2;
+								}
+								role.modified_property[meatinfo.key]+=get_value;
+								gameinfo.players[role.uid][meatinfo.key]+=role.inteligent;
+								gameinfo.map.meat[role.pos_id]=100;
 							}
-							meat=Math.round(meat);
-							role.modified_property.meat+=meat;
-							gameinfo.players[role.uid].meat+=meat;
-							gameinfo.map.meat[role.pos_id]=100;
+								
 
 							break;
 
 						//采集树枝
-						case 16:
-							// var meat_id=Math.floor(meat_id_and_value/100);
-							// var meatinfo=defaultDataManager.get_d_meat(meat_id);
-							var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id)
-							var branch=role.inteligent;
-							if(distance!=-1)
-							{
-								branch=branch*(2-distance/10);
-							}
-							branch=Math.round(branch);
-							role.modified_property.branch+=branch;
-							gameinfo.players[role.uid].branch+=branch;
+						// case 16:
+						// 	// var meat_id=Math.floor(meat_id_and_value/100);
+						// 	// var meatinfo=defaultDataManager.get_d_meat(meat_id);
+						// 	var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id)
+						// 	var branch=role.inteligent;
+						// 	if(distance!=-1)
+						// 	{
+						// 		branch=branch*(2-distance/10);
+						// 	}
+						// 	branch=Math.round(branch);
+						// 	role.modified_property.branch+=branch;
+						// 	gameinfo.players[role.uid].branch+=branch;
 
-							break;
+						// 	break;
 
-						//熊采集蜂蜜
-						case 101:
-							gameinfo.players[role.uid].meat+=role_all_property.inteligent;
-							role.fat+=role_all_property.inteligent;
-							break;
+						//100以上的都是npc的指令
+						//动物采集
+						// case 101:
+						// 	if(role.uid<0)
+						// 	{
+						// 		var meat_id_and_value=gameinfo.map.meat[role.pos_id];
+						// 		var meat_id=Math.floor(meat_id_and_value/100);
+						// 		if(meat_id>1)
+						// 		{
+						// 			var meatinfo=defaultDataManager.get_d_meat(meat_id);
+						// 			// var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id)
+						// 			// var get_value=role.inteligent;//meatinfo.base_food*(role.inteligent<meatinfo.inteligent_need?role.inteligent/meatinfo.inteligent_need:1);
+						// 			// if(distance!=-1)
+						// 			// {
+						// 			// 	meat=meat*(2-distance/10);
+						// 			// }
+						// 			// get_value=Math.round(get_value);
+						// 			role.modified_property[meatinfo.key]+=role.inteligent;
+						// 			gameinfo.players[role.uid][meatinfo.key]+=role.inteligent;
+						// 			gameinfo.map.meat[role.pos_id]=100;
+						// 		}
+						// 	}
+								
+						// 	break;
 
 					}
 				// }
@@ -933,7 +1008,7 @@ exports.executedirection=function(gameinfo)
 					var recovery=Math.min(role_all_property.lipase,role.fat);//Math.min(role.blood_sugar_max-role.blood_sugar,role.lipase/100*(2-role_all_property.health)*role.fat);
 					role.modified_property.blood_sugar+=recovery;
 					role.modified_property.fat-=recovery;
-					console.log(recovery)
+					// console.log(recovery)
 				}
 			}
 
@@ -958,7 +1033,7 @@ exports.executedirection=function(gameinfo)
 					// }
 					if(role.blood_sugar+role.modified_property.blood_sugar>role_all_property.blood_sugar_max)
 					{
-						//过量治疗，
+						//过量血量
 						var over_blood=role.blood_sugar+role.modified_property.blood_sugar-role_all_property.blood_sugar_max;
 						role.modified_property.blood_sugar-=over_blood;//role.blood_sugar_max+role.modified_property.blood_sugar_max-role.blood_sugar;
 						// role.modified_property.fat+=over_blood;
@@ -976,7 +1051,9 @@ exports.executedirection=function(gameinfo)
 
 					role.modified_property.banana=Math.round(role.modified_property.banana);
 					role.modified_property.meat=Math.round(role.modified_property.meat);
-					role.modified_property.branch=Math.round(role.modified_property.branch);
+					role.modified_property.ant=Math.round(role.modified_property.ant);
+					role.modified_property.egg=Math.round(role.modified_property.egg);
+					role.modified_property.honey=Math.round(role.modified_property.honey);
 
 
 					//更改
@@ -1065,6 +1142,7 @@ exports.executedirection=function(gameinfo)
 			continue;
 		}
 
+
 		//刷新地图资源
 		else if(step==9)
 		{
@@ -1079,7 +1157,7 @@ exports.executedirection=function(gameinfo)
 				{
 				
 
-					if(meat_value>0)
+					if(meat_value>1)
 					{
 						meat_value--;
 						gameinfo.map.meat[pos_id]=meat_id*100+meat_value;
@@ -1100,32 +1178,28 @@ exports.executedirection=function(gameinfo)
 				random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
 				if(gameinfo.map.landform[random_pos_id]!=3)
 				{
-					if(gameinfo.map.meat[random_pos_id]==100)
+					if(gameinfo.map.meat[random_pos_id]==100&&gameinfo.map.resource[random_pos_id]==2)
 					{
-						//白蚁
-						var meat=defaultDataManager.get_d_meat(3);
-						gameinfo.map.meat[random_pos_id]=meat.meat_id*100+meat.last_turn;
+						//香蕉
+						gameinfo.map.meat[random_pos_id]=300;
 					}
 					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
 					if(gameinfo.map.meat[random_pos_id]==100)
 					{
-						//飞蚁
-						var meat=defaultDataManager.get_d_meat(4);
-						gameinfo.map.meat[random_pos_id]=meat.meat_id*100+meat.last_turn;
+						//白蚁
+						gameinfo.map.meat[random_pos_id]=400;
 					}
 					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
 					if(gameinfo.map.meat[random_pos_id]==100&&gameinfo.map.resource[random_pos_id]==2)
 					{
 						//鸟蛋
-						var meat=defaultDataManager.get_d_meat(5);
-						gameinfo.map.meat[random_pos_id]=meat.meat_id*100+meat.last_turn;
+						gameinfo.map.meat[random_pos_id]=500;
 					}
 					random_pos_id=Math.floor(Math.random()*gametype.width*gametype.height);
 					if(gameinfo.map.meat[random_pos_id]==100&&gameinfo.map.resource[random_pos_id]==2)
 					{
-						//蜂巢
-						var meat=defaultDataManager.get_d_meat(6);
-						gameinfo.map.meat[random_pos_id]=meat.meat_id*100+meat.last_turn;
+						//蜂蜜
+						gameinfo.map.meat[random_pos_id]=600;
 					}
 				}
 			}
@@ -1135,7 +1209,7 @@ exports.executedirection=function(gameinfo)
 			for(role_id in gameinfo.roles)
 			{
 				var role=gameinfo.roles[role_id];
-				if(role.blood_sugar==0)
+				if(role.blood_sugar<=0)
 				{
 					var d_meat=defaultDataManager.get_d_meat(2);
 					gameinfo.map.meat[role.pos_id]=d_meat.meat_id*100+d_meat.last_turn;
@@ -1181,10 +1255,14 @@ exports.executedirection=function(gameinfo)
 				if(uid>=0)
 				{
 					action_list_dic[uid][step].money={
-						banana:player.banana,
 						meat:player.meat,
-						branch:player.branch,
+						banana:player.banana,
+						ant:player.ant,
+						egg:player.egg,
+						honey:player.honey,
+						// branch:player.branch,
 						group:exports.get_population_genetic_info(gameinfo,uid)
+
 					};
 				}
 
@@ -1196,12 +1274,13 @@ exports.executedirection=function(gameinfo)
 		else if(step==11)
 		{
 
-			var weight_dic=exports.get_all_resultable_weight(gameinfo);
+			var weight_dic=exports.get_all_listable_weight(gameinfo);
 			for(uid in gameinfo.players)
 			{
 				if(uid>=0)
 				{
 					action_list_dic[uid][step].weight_dic=weight_dic;
+					action_list_dic[uid][step].builing_home_count=gameinfo.players[uid].builing_home_count;
 				}
 				
 			}
@@ -1236,7 +1315,6 @@ exports.executedirection=function(gameinfo)
 
 	// console.log("mark");
 	var gameover=exports.get_gameover(gameinfo);
-	// console.log("mark2");
 	return {
 		action_list_dic:action_list_dic,
 		gameover:gameover
@@ -1251,454 +1329,484 @@ exports.executedirection=function(gameinfo)
 
 
 // //8 9 10 13 14
-// exports.execute_sub_direction=function(gameinfo,role_id,direction_did,direction_param)
-// {
-// 	var role=gameinfo.roles[role_id];
-// 	if(role.direction_did==15)
-// 	{
-// 		return;
-// 	}
-// 	// if(role.infight==1)
-// 	// {
-// 	// 	return;
-// 	// }
+exports.execute_sub_direction=function(gameinfo,role_id,direction_did,direction_param)
+{
+	var role=gameinfo.roles[role_id];
+	if(role.direction_did==15)
+	{
+		return;
+	}
+	// if(role.infight==1)
+	// {
+	// 	return;
+	// }
 
-// 	//存储指令、更新用户指令turn
-// 	role.direction_did=direction_did;
-// 	role.direction_param=direction_param;
+	//存储指令、更新用户指令turn
+	role.direction_did=direction_did;
+	role.direction_param=direction_param;
 
-// 	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
+	var gametype=defaultDataManager.get_d_gametype(gameinfo.game.gametype_id);
 
-// 	var width=gametype.width;
-// 	var height=gametype.height;
-
-
-	
-// 	// var uid=role.uid;
-
-	
-
-
-
-// 	// for(uid in gameinfo.players)
-// 	// {
-// 	// 	var player=gameinfo.players[uid];
-// 	// 	player.modified_property={
-// 	// 		banana:0,
-// 	// 		meat:0,
-// 	// 		branch:0,
-// 	// 		failed:false
-// 	// 	}
-// 	// }
-
-
-// 	var start_dic={};
-// 	var action_dic={};
-// 	// var property_dic={};
-// 	for(uid in gameinfo.players)
-// 	{
-// 		start_dic[uid]={};
-// 		action_dic[uid]={};
-// 		// property_dic[uid]={};
-
-// 		//开始时的role字典
-// 		var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);//game_total_role,game_total_map,gametype);
-// 		start_dic[uid].pos={};
-// 		for(i in insight_roles)
-// 		{
-// 			var role_t=gameinfo.roles[insight_roles[i]];
-// 			start_dic[uid].pos[role_t.role_id]=role_t.pos_id;
-// 		}
-
-// 		//新增role字典
-// 		start_dic[uid].add_roles={};
-// 		// start_dic[uid].delete_roles=[];
-
-// 		// //地图变化字典
-// 		// start_dic[uid].landform_map={};
-// 		// start_dic[uid].resource_map={};
-// 		// var sightzoon=maplib.getsightzoon_of_player(uid,gameinfo);
-// 		// for(id in sightzoon)
-// 		// {
-// 		// 	var zoon_id=sightzoon[id];
-// 		// 	start_dic[uid].landform_map[zoon_id]=gameinfo.map.landform[zoon_id];
-// 		// 	start_dic[uid].resource_map[zoon_id]=gameinfo.map.resource[zoon_id];
-// 		// }
-
-// 		// //新增、删除building字典，占位用
-// 		// start_dic[uid].add_buildings={};
-// 		// start_dic[uid].delete_buildings=[];
-
-
-// 	}
-
+	var width=gametype.width;
+	var height=gametype.height;
 
 
 	
-// 	//临时变量
-// 	role.modified_property={
-// 		blood_sugar:0,
-// 		// blood_sugar_max:0,
-// 		muscle:0,
-// 		fat:0,
-// 		inteligent:0,
-// 		digest:0,
-// 		courage:0,
-// 		old:0,
-// 		skill:{
-// 			type:0,
-// 			id:0
-// 		},
+	// var uid=role.uid;
 
-// 		// direction_did:15,
-// 		// direction_param:[],
-
-// 		//这三个仅用于发送给前端播放动画用
-// 		banana:0,
-// 		meat:0,
-// 		branch:0
+	
 
 
-// 	};
-// 	// role.direction_did=15;
-// 	switch(direction_did)
-// 	{
-// 		//采集
-// 		// case 3:
-// 		// 	// gameinfo.map.resource[role.pos_id]=2;
-// 		// 	var resource_id=gameinfo.map.resource[role.pos_id];
-// 		// 	var resourceinfo=defaultDataManager.get_d_resource(resource_id);
-// 		// 	var distance=maplib.get_nearist_home_distance(gameinfo,role.uid,role.pos_id)
-// 		// 	var banana=resourceinfo.base_food*(role.inteligent<resourceinfo.inteligent_need?role.inteligent/resourceinfo.inteligent_need:1);
-// 		// 	if(distance!=-1)
-// 		// 	{
-// 		// 		banana=banana*(2-distance/10);
-// 		// 	}
-// 		// 	banana=Math.round(banana);
-// 		// 	role.modified_property.banana+=banana;
-// 		// 	role.modified_property.direction_did=3;
-// 		// 	gameinfo.players[role.uid].modified_property.banana+=banana;
+
+	// for(uid in gameinfo.players)
+	// {
+	// 	var player=gameinfo.players[uid];
+	// 	player.modified_property={
+	// 		banana:0,
+	// 		meat:0,
+	// 		branch:0,
+	// 		failed:false
+	// 	}
+	// }
 
 
-// 		// 	break;
-// 		//吃料理
-// 		case 8:
-// 			var food=defaultDataManager.get_d_food(role.direction_param[0]);
+	var start_dic={};
+	var action_dic={};
+	// var property_dic={};
+	for(uid in gameinfo.players)
+	{
+		start_dic[uid]={};
+		action_dic[uid]={};
+		// property_dic[uid]={};
 
-// 			if(gameinfo.players[role.uid].banana>=food.banana&&gameinfo.players[role.uid].meat>=food.meat)
-// 			{
-// 				gameinfo.players[role.uid].banana-=food.banana;
-// 				gameinfo.players[role.uid].meat-=food.meat;
-// 				role.modified_property.banana-=food.banana;
-// 				role.modified_property.meat-=food.meat;
+		//开始时的role字典
+		var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);//game_total_role,game_total_map,gametype);
+		start_dic[uid].pos={};
+		for(i in insight_roles)
+		{
+			var role_t=gameinfo.roles[insight_roles[i]];
+			start_dic[uid].pos[role_t.role_id]=role_t.pos_id;
+		}
 
-// 				role.modified_property.direction_did=15;
-// 				role.direction_did=15;
+		//新增role字典
+		start_dic[uid].add_roles={};
+		// start_dic[uid].delete_roles=[];
 
-// 				var neibour_role_ids=maplib.get_neibour_role_ids(gameinfo,role.role_id);
+		// //地图变化字典
+		// start_dic[uid].landform_map={};
+		// start_dic[uid].resource_map={};
+		// var sightzoon=maplib.getsightzoon_of_player(uid,gameinfo);
+		// for(id in sightzoon)
+		// {
+		// 	var zoon_id=sightzoon[id];
+		// 	start_dic[uid].landform_map[zoon_id]=gameinfo.map.landform[zoon_id];
+		// 	start_dic[uid].resource_map[zoon_id]=gameinfo.map.resource[zoon_id];
+		// }
 
-// 				var valid_neibour_role_ids=[];
-// 				for(i in neibour_role_ids)
-// 				{
-// 					var role_id_t=neibour_role_ids[i];
-// 					var role_t=gameinfo.roles[role_id_t];
-// 					if(role_t.uid==role.uid)
-// 					{
-// 						valid_neibour_role_ids.push(role_id_t);
-// 						if(role_t.role_id!=role.role_id)
-// 						{
-// 							//临时变量
-// 							role_t.modified_property={
-// 								blood_sugar:0,
-// 								// blood_sugar_max:0,
-// 								muscle:0,
-// 								fat:0,
-// 								inteligent:0,
-// 								// amino_acid:0,
-// 								digest:0,
-// 								courage:0,
-// 								old:0,
-// 								skill:{
-// 									type:0,
-// 									id:0
-// 								},
-
-// 								// direction_did:1,
-// 								// direction_param:[],
-
-// 								//这三个仅用于发送给前端播放动画用
-// 								banana:0,
-// 								meat:0,
-// 								branch:0
+		// //新增、删除building字典，占位用
+		// start_dic[uid].add_buildings={};
+		// start_dic[uid].delete_buildings=[];
 
 
-// 							};
-// 						}
-// 					}
+	}
+
+
+
+	
+	//临时变量
+	role.modified_property={
+		blood_sugar:0,
+		// blood_sugar_max:0,
+		muscle:0,
+		fat:0,
+		inteligent:0,
+		digest:0,
+		courage:0,
+		old:0,
+		skill:{
+			type:0,
+			id:0
+		},
+
+		// direction_did:15,
+		// direction_param:[],
+
+		//这几个仅用于发送给前端播放动画用
+		meat:0,
+		banana:0,
+		ant:0,
+		egg:0,
+		honey:0
+
+
+	};
+	// role.direction_did=15;
+	switch(direction_did)
+	{
+		//采集
+		// case 3:
+		// 	// gameinfo.map.resource[role.pos_id]=2;
+		// 	var resource_id=gameinfo.map.resource[role.pos_id];
+		// 	var resourceinfo=defaultDataManager.get_d_resource(resource_id);
+		// 	var distance=maplib.get_nearist_home_distance(gameinfo,role.uid,role.pos_id)
+		// 	var banana=resourceinfo.base_food*(role.inteligent<resourceinfo.inteligent_need?role.inteligent/resourceinfo.inteligent_need:1);
+		// 	if(distance!=-1)
+		// 	{
+		// 		banana=banana*(2-distance/10);
+		// 	}
+		// 	banana=Math.round(banana);
+		// 	role.modified_property.banana+=banana;
+		// 	role.modified_property.direction_did=3;
+		// 	gameinfo.players[role.uid].modified_property.banana+=banana;
+
+
+		// 	break;
+		//吃料理
+		case 8:
+			var food=defaultDataManager.get_d_food(role.direction_param[0]);
+			if(gameinfo.players[role.uid].banana>=food.banana&&
+				gameinfo.players[role.uid].meat>=food.meat&&
+				gameinfo.players[role.uid].ant>=food.ant&&
+				gameinfo.players[role.uid].egg>=food.egg&&
+				gameinfo.players[role.uid].honey>=food.honey)
+			{
+				gameinfo.players[role.uid].banana-=food.banana;
+				gameinfo.players[role.uid].meat-=food.meat;
+				gameinfo.players[role.uid].ant-=food.ant;
+				gameinfo.players[role.uid].egg-=food.egg;
+				gameinfo.players[role.uid].honey-=food.honey;
+				// gameinfo.players[role.uid].modified_property.banana-=food.banana;
+				// gameinfo.players[role.uid].modified_property.meat-=food.meat;
+				// role.modified_property.banana-=food.banana;
+				// role.modified_property.meat-=food.meat;
+
+
+				role.modified_property.direction_did=15;
+				role.direction_did=15;
+
+				var neibour_role_ids=maplib.get_neibour_role_ids(gameinfo,role.role_id);
+
+				var valid_neibour_role_ids=[];
+				for(i in neibour_role_ids)
+				{
+					var role_id_t=neibour_role_ids[i];
+					var role_t=gameinfo.roles[role_id_t];
+					if(role_t.uid==role.uid)
+					{
+						valid_neibour_role_ids.push(role_id_t);
+						if(role_t.role_id!=role.role_id)
+						{
+							//临时变量
+							role_t.modified_property={
+								blood_sugar:0,
+								// blood_sugar_max:0,
+								muscle:0,
+								fat:0,
+								inteligent:0,
+								digest:0,
+								courage:0,
+								old:0,
+								skill:{
+									type:0,
+									id:0
+								},
+
+								// direction_did:1,
+								// direction_param:[],
+
+								//这几个仅用于发送给前端播放动画用
+								meat:0,
+								banana:0,
+								ant:0,
+								egg:0,
+								honey:0
+
+
+							};
+						}
+					}
 						
-// 				}
+				}
 
 
-// 				for(i in valid_neibour_role_ids)
-// 				{
-// 					var role_id_t=neibour_role_ids[i];
-// 					var role_t=gameinfo.roles[role_id_t];
-// 					var role_t_all_property=rolelib.get_role_all_property(role_id_t,gameinfo);
+				for(i in valid_neibour_role_ids)
+				{
+					var role_id_t=neibour_role_ids[i];
+					var role_t=gameinfo.roles[role_id_t];
+					var role_t_all_property=rolelib.get_role_all_property(role_id_t,gameinfo);
 
-// 					var blood_sugar=Math.round(Math.min(role_t_all_property.blood_sugar_max-role_t.blood_sugar,food.carbohydrate*role_t.digest/100/neibour_role_ids.length));
-// 					var fat=Math.round(food.fat*role_t.digest/100/neibour_role_ids.length);
+					var cooking_benifit=1;
+					if(role.cooking>0)
+					{
+						cooking_benifit=1.2;
+					}
 
-// 					var inteligent_benifit=1;
-// 					if(role_t_all_property.now_grow_state==0)
-// 					{
-// 						inteligent_benifit=1.5;
-// 					}
-// 					var inteligent=Math.round(food.minerals*role_t.digest*inteligent_benifit/100/neibour_role_ids.length);
+					var blood_sugar=Math.round(Math.min(role_t_all_property.blood_sugar_max-role_t.blood_sugar,cooking_benifit*food.carbohydrate*role_t.digest/1000/neibour_role_ids.length));
+					var fat=Math.round(cooking_benifit*food.fat*role_t.digest/1000/neibour_role_ids.length);
 
-// 					var muscle_benifit=1;
-// 					if(role_t_all_property.now_grow_state==1)
-// 					{
-// 						muscle_benifit=1.5;
-// 					}
-// 					var muscle=Math.round(food.protein*role_t.digest*muscle_benifit/100/neibour_role_ids.length);
+					var inteligent_benifit=1;
+					if(role_t_all_property.now_grow_state==0)
+					{
+						inteligent_benifit=1.5;
+					}
+					var inteligent=Math.round(cooking_benifit*food.minerals*role_t.digest*inteligent_benifit/1000/neibour_role_ids.length);
 
-// 					var digest=Math.round(Math.min(100-role_t.digest,food.dietary_fiber*role_t.digest/100/neibour_role_ids.length));
-// 					var old=0-Math.round(food.vitamin*role_t.digest/100/neibour_role_ids.length);
-// 					var skill={
-// 						type:0,
-// 						id:0
-// 					}
+					var muscle_benifit=1;
+					if(role_t_all_property.now_grow_state==1)
+					{
+						muscle_benifit=1.5;
+					}
+					var muscle=Math.round(cooking_benifit*food.protein*role_t.digest*muscle_benifit/1000/neibour_role_ids.length);
+
+					var digest=Math.round(Math.min(1000-role_t.digest,cooking_benifit*food.dietary_fiber*role_t.digest/1000/neibour_role_ids.length));
+					var old=0-Math.round(cooking_benifit*food.vitamin*role_t.digest/1000/neibour_role_ids.length);
+					var skill={
+						type:0,
+						id:0
+					}
 
 
-// 					if(food.inspire_skill_type!=0&&role_t.role_id==role.role_id)
-// 					{
-// 						var satisfied=true;
+					if(food.inspire_skill_type!=0&&role_t.role_id==role.role_id)
+					{
+						var satisfied=true;
 
-// 						for(i in food.inspire_skill_properties)
-// 						{
-// 							var property=food.inspire_skill_properties[i];
-// 							var value=food.inspire_skill_values[i];
-// 							if(role_all_property[property]<value)
-// 							{
-// 								satisfied=false;
-// 								break;
-// 							}
+						for(i in food.inspire_skill_properties)
+						{
+							var property=food.inspire_skill_properties[i];
+							var value=food.inspire_skill_values[i];
+							if(role_all_property[property]<value)
+							{
+								satisfied=false;
+								break;
+							}
 
-// 						}
+						}
 
-// 						switch(food.inspire_skill_type)
-// 						{
-// 							case 1:
-// 								if(role.skill_id_list.indexOf(food.inspire_skill_id)!=-1)
-// 								{
-// 									satisfied=false;
-// 								}
-// 								break;
-// 							case 2:
-// 								if(role.cook_skill_id_list.indexOf(food.inspire_skill_id)!=-1)
-// 								{
-// 									satisfied=false;
-// 								}
-// 								break;
-// 						}
+						switch(food.inspire_skill_type)
+						{
+							case 1:
+								if(role.skill_id_list.indexOf(food.inspire_skill_id)!=-1)
+								{
+									satisfied=false;
+								}
+								break;
+							case 2:
+								if(role.cook_skill_id_list.indexOf(food.inspire_skill_id)!=-1)
+								{
+									satisfied=false;
+								}
+								break;
+						}
 
-// 						if(satisfied)
-// 						{
-// 							skill.type=food.inspire_skill_type;
-// 							skill.id=food.inspire_skill_id;
-// 						}
-// 					}
+						if(satisfied)
+						{
+							skill.type=food.inspire_skill_type;
+							skill.id=food.inspire_skill_id;
+						}
+					}
 					
-// 					role_t.modified_property.blood_sugar+=blood_sugar;
-// 					// role_t.modified_property.blood_sugar_max+=Math.round(blood_sugar/10);
-// 					role_t.modified_property.fat+=fat;
-// 					role_t.modified_property.inteligent+=inteligent;
-// 					// role_t.modified_property.amino_acid+=amino_acid;
-// 					role_t.modified_property.digest+=digest;
-// 					role_t.modified_property.old+=old;
-// 					role_t.modified_property.skill=skill;
+					role_t.modified_property.blood_sugar+=blood_sugar;
+					// role_t.modified_property.blood_sugar_max+=Math.round(blood_sugar/10);
+					role_t.modified_property.muscle+=muscle;
+					role_t.modified_property.fat+=fat;
+					role_t.modified_property.inteligent+=inteligent;
+					// role_t.modified_property.amino_acid+=amino_acid;
+					role_t.modified_property.digest+=digest;
+					role_t.modified_property.old+=old;
+					role_t.modified_property.skill=skill;
 
-// 					role_t.blood_sugar+=blood_sugar;
-// 					// role_t.blood_sugar_max+=blood_sugar;
-// 					role_t.fat+=fat;
-// 					role_t.inteligent+=inteligent;
-// 					// role_t.amino_acid+=amino_acid;
-// 					role_t.digest+=digest;
-// 					role_t.old+=old;
-// 					switch(skill.type)
-// 					{
-// 						case 1:
-// 							role_t.skill_id_list.push(skill.id);
-// 							break;
-// 						case 2:
-// 							role_t.cook_skill_id_list.push(skill.id);
-// 							break;
-// 					}
+					role_t.blood_sugar+=blood_sugar;
+					// role_t.blood_sugar_max+=blood_sugar;
+					role_t.muscle+=muscle;
+					role_t.fat+=fat;
+					role_t.inteligent+=inteligent;
+					// role_t.amino_acid+=amino_acid;
+					role_t.digest+=digest;
+					role_t.old+=old;
+					switch(skill.type)
+					{
+						case 1:
+							role_t.skill_id_list.push(skill.id);
+							break;
+						case 2:
+							role_t.cook_skill_id_list.push(skill.id);
+							break;
+					}
 					
-// 				}
-// 			}
+				}
+			}
 
-// 			break;
-// 		//搭窝
-// 		case 9:
+			break;
+		//搭窝
+		case 9:
 			
-// 			var d_building=defaultDataManager.get_d_building(1);
-// 			if(gameinfo.players[role.uid][d_building.cost_key]>=d_building.cost_value*(gameinfo.players[role.uid].builing_home_count+1))
-// 			{
-// 				// role.modified_property.direction_did=15;
+			var d_building=defaultDataManager.get_d_building(1);
+			if(gameinfo.players[role.uid][d_building.cost_key]>=d_building.cost_value*(gameinfo.players[role.uid].builing_home_count+1))
+			{
+				// role.modified_property.direction_did=15;
 				
 
-// 				if(!!exports.create_building(gameinfo,role.uid,1,role.pos_id))
-// 				{
-// 					role.modified_property.direction_did=15;
-// 					role.direction_did=15;
-// 					gameinfo.players[role.uid][d_building.cost_key]-=d_building.cost_value;
-// 					role.modified_property[d_building.cost_key]-=d_building.cost_value;
-// 				}
-// 				// gameinfo.players[role.uid].banana-defaultDataManager.get_d_building(1).cost;
+				if(!!exports.create_building(gameinfo,role.uid,1,role.pos_id))
+				{
+					role.modified_property.direction_did=15;
+					role.direction_did=15;
+					gameinfo.players[role.uid][d_building.cost_key]-=d_building.cost_value;
+					role.modified_property[d_building.cost_key]-=d_building.cost_value;
+				}
+				// gameinfo.players[role.uid].banana-defaultDataManager.get_d_building(1).cost;
 				
-// 			}
+			}
 
-// 			break;
-// 		//离群
-// 		case 10:
-// 			delete gameinfo.roles[role.role_id];
+			break;
+		//离群
+		case 10:
+			delete gameinfo.roles[role.role_id];
 			
 
-// 			break;
-// 		// //哺育
-// 		// case 11:
-// 		// 	if(role.blood_sugar>=role.blood_sugar_max*0.8)
-// 		// 	{
-// 		// 		var neibour_ids=maplib.get_neibour_ids(gameinfo,role.pos_id);
-// 		// 		var new_ids=[];
-// 		// 		for(i in neibour_ids)
-// 		// 		{
-// 		// 			var neibour_pos_id=neibour_ids[i];
-// 		// 			var in_that_pos=false;
-// 		// 			for(role_id in gameinfo.roles)
-// 		// 			{
-// 		// 				var role=gameinfo.roles[role_id];
-// 		// 				if(role.pos_id==neibour_pos_id)
-// 		// 				{
-// 		// 					in_that_pos=true;
-// 		// 					break;
-// 		// 				}
-// 		// 			}
-// 		// 			if(!in_that_pos)
-// 		// 			{
-// 		// 				new_ids.push(neibour_pos_id);
-// 		// 			}
-// 		// 		}
-// 		// 		if(new_ids.length>0)
-// 		// 		{
-// 		// 			var random_id=Math.floor(Math.random()*new_ids.length);
-// 		// 			var selected_pos_id=new_ids[random_id];
-// 		// 			// var create_role = exports.create_role(gameinfo,role.uid,2,selected_pos_id);
-// 		// 			var child_role = exports.born_role(gameinfo,role,selected_pos_id);
+			break;
+		// //哺育
+		// case 11:
+		// 	if(role.blood_sugar>=role.blood_sugar_max*0.8)
+		// 	{
+		// 		var neibour_ids=maplib.get_neibour_ids(gameinfo,role.pos_id);
+		// 		var new_ids=[];
+		// 		for(i in neibour_ids)
+		// 		{
+		// 			var neibour_pos_id=neibour_ids[i];
+		// 			var in_that_pos=false;
+		// 			for(role_id in gameinfo.roles)
+		// 			{
+		// 				var role=gameinfo.roles[role_id];
+		// 				if(role.pos_id==neibour_pos_id)
+		// 				{
+		// 					in_that_pos=true;
+		// 					break;
+		// 				}
+		// 			}
+		// 			if(!in_that_pos)
+		// 			{
+		// 				new_ids.push(neibour_pos_id);
+		// 			}
+		// 		}
+		// 		if(new_ids.length>0)
+		// 		{
+		// 			var random_id=Math.floor(Math.random()*new_ids.length);
+		// 			var selected_pos_id=new_ids[random_id];
+		// 			// var create_role = exports.create_role(gameinfo,role.uid,2,selected_pos_id);
+		// 			var child_role = exports.born_role(gameinfo,role,selected_pos_id);
 
-// 		// 			var damage=0.2*role.blood_sugar_max;
-// 		// 			role.modified_property.blood_sugar-=damage;
-// 		// 			// var role_all_property=rolelib.get_role_all_property(create_role.role.role_id,gameinfo);
-// 		// 			// gameinfo.players[building.uid].activity+=role_all_property.weight;
-// 		// 		}
-// 		// 	}
+		// 			var damage=0.2*role.blood_sugar_max;
+		// 			role.modified_property.blood_sugar-=damage;
+		// 			// var role_all_property=rolelib.get_role_all_property(create_role.role.role_id,gameinfo);
+		// 			// gameinfo.players[building.uid].activity+=role_all_property.weight;
+		// 		}
+		// 	}
 				
 			
 
-// 		// 	break;
+		// 	break;
 
-// 		//搜索
-// 		// case 13:
-// 		// 	var meat_id_and_value=gameinfo.map.meat[role.pos_id];
-// 		// 	var meat_id=Math.floor(meat_id_and_value/100);
-// 		// 	var meatinfo=defaultDataManager.get_d_meat(meat_id);
-// 		// 	var distance=maplib.get_nearist_home_distance(gameinfo,role.uid,role.pos_id)
-// 		// 	var meat=meatinfo.base_food*(role.inteligent<meatinfo.inteligent_need?role.inteligent/meatinfo.inteligent_need:1);
-// 		// 	if(distance!=-1)
-// 		// 	{
-// 		// 		meat=meat*(2-distance/10);
-// 		// 	}
-// 		// 	meat=Math.round(meat);
-// 		// 	role.modified_property.meat+=meat;
-// 		// 	// role.modified_property.direction_did=13;
-// 		// 	gameinfo.players[role.uid].meat+=meat;
+		//采集
+		case 13:
+			var meat_id_and_value=gameinfo.map.meat[role.pos_id];
+			var meat_id=Math.floor(meat_id_and_value/100);
+			if(meat_id>1)
+			{
+				var meatinfo=defaultDataManager.get_d_meat(meat_id);
+				// var distance=maplib.get_nearist_home_distance(gameinfo,role.role_id)
+				// var get_value=role.inteligent;//meatinfo.base_food*(role.inteligent<meatinfo.inteligent_need?role.inteligent/meatinfo.inteligent_need:1);
+				// if(distance!=-1)
+				// {
+				// 	meat=meat*(2-distance/10);
+				// }
+				// get_value=Math.round(get_value);
+				var get_value=role.inteligent;
+				if(role.careful>0)
+				{
+					get_value=get_value*1.2;
+				}
+				role.modified_property[meatinfo.key]+=get_value;
+				gameinfo.players[role.uid][meatinfo.key]+=get_value;
+				gameinfo.map.meat[role.pos_id]=100;
 
-// 		// 	gameinfo.map.meat[role.pos_id]=100;
+				role.modified_property.direction_did=15;
+				role.direction_did=15;
+			}
+				
 
-// 		// 	break;
+			break;
 
-// 		//拆除
-// 		case 14:
-// 			role.modified_property.direction_did=15;
-// 			role.direction_did=15;
-// 			for(building_id in gameinfo.buildings)
-// 			{
-// 				var building=gameinfo.buildings[building_id];
-// 				if(building.pos_id==role.pos_id)
-// 				{
-// 					// gameinfo.players[building.uid].activity+=defaultDataManager.get_d_building(3).cost;
-// 					delete gameinfo.buildings[building_id];
-// 					break;
-// 				}
-// 			}
+		//拆除
+		case 14:
+			role.modified_property.direction_did=15;
+			role.direction_did=15;
+			for(building_id in gameinfo.buildings)
+			{
+				var building=gameinfo.buildings[building_id];
+				if(building.pos_id==role.pos_id)
+				{
+					// gameinfo.players[building.uid].activity+=defaultDataManager.get_d_building(3).cost;
+					delete gameinfo.buildings[building_id];
+					break;
+				}
+			}
 
-// 			break;
+			break;
 
-// 	}
+	}
 
 
 
 
 	
-// 	// var gameover=exports.get_gameover(gameinfo);
-// 	// console.log(gameinfo.players)
-// 	var all_weight=exports.get_all_weight(gameinfo);
-// 	for(uid in gameinfo.players)
-// 	{
-// 		if(uid>=0)
-// 		{
-// 			var modified_dic=gen_modefied_dic(gameinfo,uid,start_dic[uid]);
-// 			action_dic[uid]={};
-// 			action_dic[uid].modified_dic=modified_dic;
-// 			action_dic[uid].property_dic={};
-// 			action_dic[uid].weight_dic=all_weight;
-// 			action_dic[uid].builing_home_count=gameinfo.players[uid].builing_home_count;
+	// var gameover=exports.get_gameover(gameinfo);
+	// console.log(gameinfo.players)
+	var all_weight=exports.get_all_listable_weight(gameinfo);
+	for(uid in gameinfo.players)
+	{
+		if(uid>=0)
+		{
+			var modified_dic=gen_modefied_dic(gameinfo,uid,start_dic[uid]);
+			action_dic[uid]={};
+			action_dic[uid].modified_dic=modified_dic;
+			action_dic[uid].property_dic={};
+			action_dic[uid].weight_dic=all_weight;
+			action_dic[uid].builing_home_count=gameinfo.players[uid].builing_home_count;
 
-// 			var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);
+			var insight_roles=maplib.get_role_ids_in_sightzoon_of_player(uid,gameinfo);
 
-// 			for(i in insight_roles)
-// 			{
-// 				var role_t=gameinfo.roles[insight_roles[i]];
-// 				// console.log(role_t)
-// 				if(!!role_t.modified_property)
-// 				{
-// 					action_dic[uid].property_dic[role_t.role_id]=role_t.modified_property;
-// 				}
-// 			}
-// 		}
-
-
-// 	}
+			for(i in insight_roles)
+			{
+				var role_t=gameinfo.roles[insight_roles[i]];
+				// console.log(role_t)
+				if(!!role_t.modified_property)
+				{
+					action_dic[uid].property_dic[role_t.role_id]=role_t.modified_property;
+				}
+			}
+		}
 
 
-
-// 	//删除临时变量
-// 	for(role_id_t in gameinfo.roles)
-// 	{
-// 		var role_t=gameinfo.roles[role_id_t];
-// 		if(!!role_t.modified_property)
-// 		{
-// 			delete role_t.modified_property;
-// 		}
-// 	}
+	}
 
 
 
-// 	return action_dic;
+	//删除临时变量
+	for(role_id_t in gameinfo.roles)
+	{
+		var role_t=gameinfo.roles[role_id_t];
+		if(!!role_t.modified_property)
+		{
+			delete role_t.modified_property;
+		}
+	}
 
 
-// }
+
+	return action_dic;
+
+
+}
 
 
 
@@ -1779,7 +1887,7 @@ exports.create_role=function(gameinfo,uid,role_did,pos_id)
 	}
 	
 	var name;
-	if(gameinfo.names_left.length>0)
+	if(gameinfo.names_left.length>0&&(role_did==2||role_did==3||role_did==4||role_did==5))
 	{
 		var names_dic=defaultDataManager.get_d_names_dic();
 		name=names_dic[gameinfo.names_left.pop()];
@@ -1817,9 +1925,9 @@ exports.create_role=function(gameinfo,uid,role_did,pos_id)
 	gameinfo.roles[role.role_id]=role;
 
 
-	//生成当前血量，肺活量
-	// var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
-	// role.blood_sugar=role_all_property.blood_sugar_max;
+	//生成当前血量
+	var role_all_property=rolelib.get_role_all_property(role.role_id,gameinfo);
+	role.blood_sugar=role_all_property.blood_sugar_max;
 	// role.lipase=role_all_property.basal_metabolism;
 
 
@@ -2032,7 +2140,10 @@ var gen_modefied_dic=function(gameinfo,uid,last_pos_dic)
 	for(i in insight_roles)
 	{
 		var role=gameinfo.roles[insight_roles[i]];
-		modefied_dic.pos[role.role_id]=role.pos_id;
+		modefied_dic.pos[role.role_id]={
+			pos_id:role.pos_id,
+			direction_did:role.direction_did
+		};
 	}
 
 	//新增role字典
@@ -2306,7 +2417,6 @@ exports.get_all_weight=function(gameinfo)
 	{
 		var role=gameinfo.roles[role_id];
 		var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
-
 		result[role.uid]+=role_all_property.weight;
 		// for(uid in gameinfo.players)
 		// {
@@ -2317,15 +2427,30 @@ exports.get_all_weight=function(gameinfo)
 	return result;
 }
 
+exports.get_all_listable_weight=function(gameinfo)
+{
+	var all_weight=exports.get_all_weight(gameinfo);
+	var all_listable_weight={};
+	for(uid in all_weight)
+	{
+		if(uid>-101)
+		{
+			all_listable_weight[uid]=all_weight[uid];
+		}
+	}
+	
+	return all_listable_weight;
+}
+
 exports.get_all_resultable_weight=function(gameinfo)
 {
 	var all_weight=exports.get_all_weight(gameinfo);
 	var all_resultable_weight={};
-	for(group_id in all_weight)
+	for(uid in all_weight)
 	{
-		if(group_id!=-2)
+		if(uid>0)
 		{
-			all_resultable_weight[group_id]=all_weight[group_id];
+			all_resultable_weight[uid]=all_weight[uid];
 		}
 	}
 	
@@ -2356,6 +2481,38 @@ exports.get_group_weight=function(gameinfo)
 	return group_weight;
 }
 
+exports.get_listable_group_weight=function(gameinfo)
+{
+	var group_weight=exports.get_group_weight(gameinfo);
+	var listable_group_weight={};
+	for(group_id in group_weight)
+	{
+		if(group_id>-101)
+		{
+			listable_group_weight[group_id]=group_weight[group_id];
+		}
+	}
+	
+	return listable_group_weight;
+}
+
+exports.get_resultable_group_weight=function(gameinfo)
+{
+	var group_weight=exports.get_group_weight(gameinfo);
+	var resultable_group_weight={};
+	for(group_id in group_weight)
+	{
+		if(group_id>0)
+		{
+			resultable_group_weight[group_id]=group_weight[group_id];
+		}
+	}
+	
+	return resultable_group_weight;
+}
+
+
+
 exports.get_user_role_in_pos=function(gameinfo,pos_id)
 {
 	var is_in=false;
@@ -2378,7 +2535,8 @@ exports.get_gameover=function(gameinfo)
 	var loser_groups=[];
 
 	var all_weight=exports.get_all_weight(gameinfo);
-	var group_weight=exports.get_group_weight(gameinfo);
+	var group_weight=exports.get_listable_group_weight(gameinfo);
+	// var listable_group_weight=exports.get_listable_group_weight(gameinfo);
 	
 	// console.log('group_weight')
 	// console.log(gameinfo)
@@ -2447,23 +2605,20 @@ exports.get_gameover=function(gameinfo)
 				gametype_id:gameinfo.game.gametype_id
 			}
 		}
-		//pvp 体重最重的组赢(不包括熊)
+		//pvp 体重最重的组赢
 		else if(gameinfo.game.gametype_id==2)
 		{
 			var winner_group_id;
 			for(group_id in group_weight)
 			{
-				if(group_id!=-2)
+				var weight=group_weight[group_id];
+				if(!winner_group_id)
 				{
-					var weight=group_weight[group_id];
-					if(!winner_group_id)
-					{
-						winner_group_id=group_id;
-					}
-					else if(weight>group_weight[winner_group_id])
-					{
-						winner_group_id=group_id;
-					}
+					winner_group_id=group_id;
+				}
+				else if(weight>group_weight[winner_group_id])
+				{
+					winner_group_id=group_id;
 				}
 					
 			}
@@ -2471,12 +2626,9 @@ exports.get_gameover=function(gameinfo)
 			winner_groups.push(winner_group_id);
 			for(group_id in group_weight)
 			{
-				if(group_id!=-2)
+				if(winner_group_id!=group_id)
 				{
-					if(winner_group_id!=group_id)
-					{
-						loser_groups.push(group_id);
-					}
+					loser_groups.push(group_id);
 				}
 			}
 			// console.log(2);
@@ -2496,25 +2648,23 @@ exports.get_gameover=function(gameinfo)
 	}
 	else
 	{
+		//查找胜利组
 		for(group_id in group_weight)
 		{
-			if(group_id!=-2)
+			var weight=group_weight[group_id];
+
+			var weight_result=(max_group_weight!=-1&&weight>=max_group_weight)||max_group_weight==-1;
+
+			//多人游戏，默认无tar_pos触发胜利方式
+			var pos_result=false;//=(&&)
+			//单人游戏，且开启了tar_pos触发胜利方式
+			if(gameinfo.game.gametype_id==1&&tar_pos!=-1)
 			{
-				var weight=group_weight[group_id];
-
-				var weight_result=(max_group_weight!=-1&&weight>=max_group_weight)||max_group_weight==-1;
-
-				//多人游戏，默认无tar_pos触发胜利方式
-				var pos_result=false;//=(&&)
-				//单人游戏，且开启了tar_pos触发胜利方式
-				if(gameinfo.game.gametype_id==1&&tar_pos!=-1)
-				{
-					pos_result=exports.get_user_role_in_pos(gameinfo,tar_pos);
-				}
-				if(weight_result||pos_result)
-				{
-					winner_groups.push(group_id);
-				}
+				pos_result=exports.get_user_role_in_pos(gameinfo,tar_pos);
+			}
+			if(weight_result||pos_result)
+			{
+				winner_groups.push(group_id);
 			}
 				
 		}
@@ -2523,12 +2673,9 @@ exports.get_gameover=function(gameinfo)
 		{
 			for(group_id in group_weight)
 			{
-				if(group_id!=-2)
+				if(winner_groups.indexOf(group_id)==-1)
 				{
-					if(winner_groups.indexOf(group_id)==-1)
-					{
-						loser_groups.push(group_id);
-					}
+					loser_groups.push(group_id);
 				}
 					
 				
@@ -2545,46 +2692,47 @@ exports.get_gameover=function(gameinfo)
 			}
 			
 		}
-		//没有人赢
+		//没有组赢
 		else
 		{
 			for(group_id in group_weight)
 			{
-				if(group_id!=-2)
+				var weight=group_weight[group_id];
+				if(weight==0)
 				{
-					var weight=group_weight[group_id];
-					if(weight==0)
-					{
-						loser_groups.push(group_id);
-					}
+					loser_groups.push(group_id);
 				}
 					
 			}
 			//有人体重为0，若其他人只剩1人，则游戏结束
 			// if((Object.keys(group_weight).length>1&&loser_groups.length>=Object.keys(group_weight).length-1)||
 			// 	(Object.keys(group_weight).length==1&&loser_groups.length==1))
-			var all_group_count=0;
-			var loser_group_count=0;
-			for(group_id in group_weight)
+			var all_group_count=Object.keys(group_weight).length;
+			var loser_group_count=loser_groups.length;
+
+			var all_real_player_weight=0;
+			for(uid in all_weight)
 			{
-				if(group_id!=-2)
+				var weight=all_weight[uid];
+				if(uid>0)
 				{
-					all_group_count++;
-				}
-					
-			}
-			for(i in loser_groups)
-			{
-				if(loser_groups[i]!=-2)
-				{
-					loser_group_count++;
+					all_real_player_weight+=weight;
 				}
 			}
-			if(all_group_count-loser_group_count==1)
+			// for(group_id in group_weight)
+			// {
+			// 	all_group_count++;
+			// }
+			// for(i in loser_groups)
+			// {
+			// 	loser_group_count++;
+			// }
+			//体重不为0的组不大于1，则该组获胜，或者无组获胜
+			if(all_group_count-loser_group_count<=1)
 			{
 				for(group_id in group_weight)
 				{
-					if(group_id!=-2&&loser_groups.indexOf(group_id)==-1)
+					if(loser_groups.indexOf(group_id)==-1)
 					{
 						winner_groups.push(group_id);
 					}
@@ -2600,7 +2748,20 @@ exports.get_gameover=function(gameinfo)
 					gametype_id:gameinfo.game.gametype_id
 				}
 			}
-			//有人体重为0，剩余人数不少于1人，游戏未结束
+			//所有玩家组体重都为0
+			else if(all_real_player_weight==0)
+			{
+				return {
+					result:{
+						winner_groups:winner_groups,
+						loser_groups:loser_groups,
+					},
+					all_weight:all_weight,
+					group_weight:group_weight,
+					gametype_id:gameinfo.game.gametype_id
+				}
+			}
+			//体重>0的组大于1，游戏未结束
 			else
 			{
 				// console.log(5);
@@ -2721,10 +2882,11 @@ var set_npc_direction=function(gameinfo)
 			//血多
 			else
 			{
+				var safe=true;
 				//有敌人
 				if(enemies.type!=0)
 				{
-
+					safe=false;
 					var weakest_enemy_id;
 					var value=2;
 					
@@ -2744,23 +2906,29 @@ var set_npc_direction=function(gameinfo)
 					// console.log('weakest_enemy')
 					// console.log(weakest_enemy)
 					//健康度不如对手，防御
-					if(role.health<=weakest_enemy_all_property.health)
+					if(role.health<=weakest_enemy_all_property.health||role.coward>0)
 					{
 						role.direction_did=2;
 						role.direction_param=[];
 					}
 					//朝其中最虚弱的移动
-					else
+					else if(role.agressive>0)
 					{
 						var path=maplib.get_path(gameinfo,role.pos_id,weakest_enemy.pos_id);
 						role.direction_did=1;
 						role.direction_param=path;
 						// is_delay=true;
 					}
+					//无视敌人
+					else
+					{
+						safe=true;
+					}
+
 						
 				}
-				//无敌人
-				else
+				//安全
+				if(safe)
 				{
 					var role_count=0;
 					for(role_id_t in gameinfo.roles)
@@ -2792,9 +2960,14 @@ var set_npc_direction=function(gameinfo)
 						body_style=4;
 					}
 
-					//不同的单位，有不同的选择方案
+					//挑选料理的方法，不同的单位，有不同的选择方案: 0高糖 1高蛋白 2高脂肪 3高矿物质 4高膳食纤维 5高维他命 6高综合(目前只考虑012)
 					var select_method;
-					var find_food_method;
+					//寻找食材的方法
+					var find_food_method_meat;
+					var find_food_method_banana;
+					var find_food_method_ant;
+					var find_food_method_egg;
+					var find_food_method_honey;
 					switch(role.role_did)
 					{
 						//猩猩
@@ -2813,11 +2986,20 @@ var set_npc_direction=function(gameinfo)
 							{
 								select_method=6;
 							}
-							find_food_method=2;
+							find_food_method_meat=true;
+							find_food_method_banana=true;
+							find_food_method_ant=true;
+							find_food_method_egg=true;
+							find_food_method_honey=true;
 							break;
 						//棕熊
 						case 7:
-							find_food_method=3;
+							select_method=0;
+							find_food_method_meat=true;
+							find_food_method_banana=false;
+							find_food_method_ant=false;
+							find_food_method_egg=false;
+							find_food_method_honey=true;
 							break;
 					}
 					var selected_food_id=select_food(gameinfo,role.uid,select_method,0,0);
@@ -2833,7 +3015,7 @@ var set_npc_direction=function(gameinfo)
 						this_food_enough=false;
 					}
 					//食材储量足够
-					if(this_food_enough&&player.banana>=role_count*selected_food.banana&&player.meat>=role_count*selected_food.meat)
+					if(this_food_enough&&player.banana>=role_count*selected_food.banana&&player.meat>=role_count*selected_food.meat&&player.ant>=role_count*selected_food.ant&&player.egg>=role_count*selected_food.egg&&player.honey>=role_count*selected_food.honey)
 					{
 						role.direction_did=8;
 						role.direction_param=[selected_food_id];
@@ -2841,14 +3023,14 @@ var set_npc_direction=function(gameinfo)
 					//食材储量不够
 					else
 					{
-						//寻找食物
-						var nearist_food_pos_id=find_nearist_food(gameinfo,role.pos_id,find_food_method);
+						//寻找食材
+						var nearist_food_pos_id=find_nearist_food(gameinfo,role.pos_id,find_food_method_meat,find_food_method_banana,find_food_method_ant,find_food_method_egg,find_food_method_honey);
 						if(!!nearist_food_pos_id)
 						{
-							//脚下有食物
+							//脚下有食材
 							if(role.pos_id==nearist_food_pos_id)
 							{
-								if(find_food_method==1||find_food_method==2||find_food_method==3)
+								if(gameinfo.map.meat[nearist_food_pos_id]!=100)
 								{
 									role.direction_did=13;
 									role.direction_param=[];
@@ -2860,14 +3042,14 @@ var set_npc_direction=function(gameinfo)
 								}
 								
 							}
-							//脚下无食物
+							//脚下无食材
 							else
 							{
 								role.direction_did=1;
 								role.direction_param=maplib.get_path(gameinfo,role.pos_id,nearist_food_pos_id);
 							}
 						}
-						//未发现食物
+						//未发现食材
 						else
 						{
 							role.direction_did=2;
@@ -2954,19 +3136,27 @@ var select_food=function(gameinfo,uid,select_method,inspire_skill_type,inspire_s
 	
 }
 
-//find_method 0水果 1肉 2任意 3蜂蜜
-var find_nearist_food=function(gameinfo,pos_id,find_method)
+
+var find_nearist_food=function(gameinfo,pos_id,meat,banana,ant,egg,honey)
 {
 	var food_pos_id;
-	if(gameinfo.map.meat[pos_id]!=100&&(find_method==1||find_method==2))
+	if(gameinfo.map.meat[pos_id]==200&&meat)
 	{
 		return pos_id;
 	}
-	if(gameinfo.map.resource[pos_id]==2&&(find_method==0||find_method==2))
+	if(gameinfo.map.meat[pos_id]==300&&banana)
 	{
 		return pos_id;
 	}
-	if(gameinfo.map.meat[pos_id]==600&&find_method==3)
+	if(gameinfo.map.meat[pos_id]==400&&ant)
+	{
+		return pos_id;
+	}
+	if(gameinfo.map.meat[pos_id]==500&&egg)
+	{
+		return pos_id;
+	}
+	if(gameinfo.map.meat[pos_id]==600&&honey)
 	{
 		return pos_id;
 	}
@@ -2974,32 +3164,38 @@ var find_nearist_food=function(gameinfo,pos_id,find_method)
 	{
 		var circle_ids=maplib.get_circle_ids(gameinfo,pos_id,i+1);
 		var temp_meat_ids=[];
-		var temp_banana_ids=[];
+		// var temp_banana_ids=[];
 		for(var j=0;j<circle_ids.length;j++)
 		{
 			var temp_id=circle_ids[j];
-			if(gameinfo.map.meat[temp_id]!=100&&(find_method==1||find_method==2))
+			// if(gameinfo.map.meat[temp_id]!=100&&(find_method==1||find_method==2))
+			// {
+			// 	temp_meat_ids.push(temp_id);
+			// }
+			if(gameinfo.map.meat[temp_id]==200&&meat)
 			{
 				temp_meat_ids.push(temp_id);
 			}
-			if(gameinfo.map.resource[temp_id]==2&&(find_method==0||find_method==2))
+			if(gameinfo.map.meat[temp_id]==300&&banana)
 			{
-				temp_banana_ids.push(temp_id);
+				temp_meat_ids.push(temp_id);
 			}
-			if(gameinfo.map.meat[pos_id]==600&&find_method==3)
+			if(gameinfo.map.meat[temp_id]==400&&ant)
+			{
+				temp_meat_ids.push(temp_id);
+			}
+			if(gameinfo.map.meat[temp_id]==500&&egg)
+			{
+				temp_meat_ids.push(temp_id);
+			}
+			if(gameinfo.map.meat[temp_id]==600&&honey)
 			{
 				temp_meat_ids.push(temp_id);
 			}
 		}
-
 		if(temp_meat_ids.length>0)
 		{
 			food_pos_id=temp_meat_ids[Math.floor(Math.random()*temp_meat_ids.length)];
-			break;
-		}
-		if(temp_banana_ids.length>0)
-		{
-			food_pos_id=temp_banana_ids[Math.floor(Math.random()*temp_banana_ids.length)];
 			break;
 		}
 

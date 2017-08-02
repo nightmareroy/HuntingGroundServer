@@ -29,13 +29,13 @@ const DoAction="DoAction";
 const PlayerFail="PlayerFail";
 
 //游戏数据判输，离开频道
-GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_sid,timeout_sid,uid,callback)
+GameRemote.prototype.OnUserLeave=function(game_id,gamedata_sid,gamechannel_sid,timeout_sid,uid,callback)
 {
 	var gameinfo;
 
 	var funcs=[];
 	funcs.push((cb)=>{
-		this.app.rpc.gamedata.gamedataRemote.LeaveGame(gamedata_sid,creator_id,uid,(result_t)=>{
+		this.app.rpc.gamedata.gamedataRemote.LeaveGame(gamedata_sid,game_id,uid,(result_t)=>{
 			gameinfo=result_t;
 			cb();
 		});
@@ -56,8 +56,8 @@ GameRemote.prototype.OnUserLeave=function(creator_id,gamedata_sid,gamechannel_si
 		console.log(gameover)
 		if(!!gameover)
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,gameinfo.game.creator_id,gameover,()=>{});
-			this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,creator_id,()=>{});
+			this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,gameinfo.game.game_id,gameover,()=>{});
+			this.app.rpc.timeout.timeoutRemote.delete_time(timeout_sid,game_id,()=>{});
 			cb();
 		}
 		else

@@ -10,6 +10,7 @@ var FriendRemote = function(app) {
 var logger = require('pomelo-logger').getLogger(__filename);
 
 var pomelo = require('pomelo');
+var uuid=require('uuid');
 // var defaultDataManager=require('../../../defaultdata/defaultDataManager');
 var defaultDataManager=pomelo.app.get('defaultDataManager');
 
@@ -230,6 +231,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 
 				var gameinfo={
 					game:{
+						game_id:uuid.v1(),
 						creator_id:src_uid,
 						gametype_id:2
 						// win_condition:"50回合内达到1000总体重,或对手总体重为0"
@@ -270,7 +272,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 							actived_food_ids:backendSession.get('actived_food_ids'),
 							frontendId:channel.records[src_uid].sid
 						};
-						backendSession.set('creator_id',src_uid);
+						backendSession.set('game_id',gameinfo.game.game_id);
 						backendSession.set('gamedata_sid',gamedata_sid);
 						backendSession.set('gamechannel_sid',gamechannel_sid);
 						backendSession.set('timeout_sid',timeout_sid);
@@ -291,7 +293,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 							actived_food_ids:backendSession.get('actived_food_ids'),
 							frontendId:channel.records[tar_uid].sid
 						};
-						backendSession.set('creator_id',src_uid);
+						backendSession.set('game_id',gameinfo.game.game_id);
 						backendSession.set('gamedata_sid',gamedata_sid);
 						backendSession.set('gamechannel_sid',gamechannel_sid);
 						backendSession.set('timeout_sid',timeout_sid);
@@ -311,7 +313,7 @@ FriendRemote.prototype.AgreeInviteFight = function(src_uid,tar_uid,cb)
 	
 				//加入计时器
 				funcs.push((cb)=>{
-					this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,src_uid,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+					this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,gameinfo.game.game_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
 						gameinfo.game.nexttime=nexttime;
 						cb();
 					})

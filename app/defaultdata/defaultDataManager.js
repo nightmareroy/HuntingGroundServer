@@ -31,6 +31,7 @@ var d_cook_skill={};
 var d_food={};
 var d_story_talk={};
 // var d_random_talk={};
+var d_help={};
 
 exports.init=function(write)
 {
@@ -72,8 +73,8 @@ exports.init=function(write)
 				for(i in rows)
 				{
 					d_skill[rows[i].skill_id]=rows[i];
-					d_skill[rows[i].skill_id].properties=JSON.parse(d_skill[rows[i].skill_id].properties);
-					d_skill[rows[i].skill_id].params=JSON.parse(d_skill[rows[i].skill_id].params);
+					d_skill[rows[i].skill_id].keys=JSON.parse(d_skill[rows[i].skill_id].keys);
+					d_skill[rows[i].skill_id].values=JSON.parse(d_skill[rows[i].skill_id].values);
 				}
 				if(write)
 				{
@@ -510,6 +511,8 @@ exports.init=function(write)
 	// 	});
 	// });
 
+	
+
 	funcs.push((cb)=>{
 		sql="select * from names";
 		connection.query(sql,null,(err,rows)=>{
@@ -638,7 +641,35 @@ exports.init=function(write)
 		});
 	});
 
-
+	funcs.push((cb)=>{
+		sql="select * from help";
+		connection.query(sql,null,(err,rows)=>{
+			if(err)
+			{
+				cb(err);
+			}
+			else
+			{
+				for(i in rows)
+				{
+					d_help[rows[i].id]=rows[i];
+				}
+				if(write)
+				{
+					var str=JSON.stringify(d_help);
+					fs.writeFile('app/defaultdata/alldata/defaultdata/DHelp.txt',str,(err_fs,data_fs)=>{
+						datalist.DHelp=md5.md5(str);
+						cb(err_fs);
+					});
+				}
+				else
+				{
+					cb();
+				}
+				
+			}
+		});
+	});
 
 
 

@@ -2427,6 +2427,25 @@ exports.get_pos_movable=function(pos_id,gameinfo)
 	return movable;
 }
 
+// exports.get_pos_movable_without_mount_consider=function(pos_id,gameinfo)
+// {
+
+// 	var movable=true;
+
+// 	for(role_id in gameinfo.roles)
+// 	{
+// 		var role=gameinfo.roles[role_id];
+// 		// var role_all_property=rolelib.get_role_all_property(role_id,game_total_role);
+// 		if(role.pos_id==pos_id)
+// 		{
+// 			movable=false;
+// 			break;
+// 		}
+		
+// 	}
+// 	return movable;
+// }
+
 //只是修改数据，不做合理性检测
 exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_total_role,game_total_map,game_user_map,gametype)
 {
@@ -2436,8 +2455,18 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 	var cost=landform_next.cost;
 
 	var role=gameinfo.roles[role_id];
+	var role_all_property=rolelib.get_role_all_property(role_id,gameinfo);
+
+	if(landform_next.landform_id==2&&role_all_property.climb>0)
+	{
+		cost=1;
+	}
+
+	
 	if(role.move>=cost&&landform_next.cost>0)
 	{
+		
+			
 		role.pos_id=next_pos_id;
 		role.move-=cost;
 		var sightzoon=exports.getsightzoon_of_role(role_id,gameinfo)//game_total_role,game_total_map,gametype);
@@ -2449,11 +2478,11 @@ exports.do_role_move=function(role_id,source_pos_id,next_pos_id,gameinfo)//game_
 			gameinfo.players[gameinfo.roles[role_id].uid].map.resource[pos_id_t]=gameinfo.map.resource[pos_id_t];
 			gameinfo.players[gameinfo.roles[role_id].uid].map.meat[pos_id_t]=gameinfo.map.meat[pos_id_t];
 		}
-		return true;
+		return cost;
 	}
 	else
 	{
-		return false;
+		return;
 	}
 
 
@@ -2529,7 +2558,7 @@ exports.get_enemies=function(role_id,gameinfo)//game_total_role,game_total_playe
 	}
 
 	//查找远程敌人
-	if(temp_enemies.type==0&&role.weapon_type_id==2)
+	if(temp_enemies.type==0&&role.weapon_type_id==2&&role.hurl>0)
 	{
 		for(role_id_t in roles_in_sightzoon)
 		{

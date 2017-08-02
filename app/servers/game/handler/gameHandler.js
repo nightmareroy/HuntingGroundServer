@@ -109,7 +109,7 @@ handler.SingleGameStart=function(msg,session,next)
 	var progress_id=msg.progress_id;
 	// var single_game_info=defaultDataManager.get_d_single_game_info(progress_id);
 
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 	var gamedata_sid;//=session.get('gamedata_sid');
 	var gamechannel_sid;//=session.get('gamechannel_sid');
 	var timeout_sid;
@@ -117,7 +117,7 @@ handler.SingleGameStart=function(msg,session,next)
 	var backendSession;
 
 
-	if(!creator_id)
+	if(!game_id)
 	{
 		//
 		next(
@@ -129,7 +129,7 @@ handler.SingleGameStart=function(msg,session,next)
 		)
 		return;
 	}
-	else if(creator_id!=-1)
+	else if(game_id!=-1)
 	{
 		//
 		next(
@@ -142,8 +142,11 @@ handler.SingleGameStart=function(msg,session,next)
 		return;
 	}
 
+	game_id=uuid.v1();
+
 	var gameinfo={
 		game:{
+			game_id:game_id,
 			creator_id:uid,
 			game_name:'single game',
 			gametype_id:1,
@@ -177,7 +180,7 @@ handler.SingleGameStart=function(msg,session,next)
 
 	//加入计时器
 	funcs.push((cb)=>{
-		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,uid,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,game_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
 			gameinfo.game.nexttime=nexttime;
 			cb();
 		})
@@ -206,7 +209,7 @@ handler.SingleGameStart=function(msg,session,next)
 		// console.log(gamedata_sid);
 		// console.log(gamechannel_sid);
 		// console.log(timeout_sid);
-		session.set('creator_id',uid);
+		session.set('game_id',game_id);
 		session.set('gamedata_sid',gamedata_sid);
 		session.set('gamechannel_sid',gamechannel_sid);
 		session.set('timeout_sid',timeout_sid);
@@ -265,7 +268,7 @@ handler.PvEGameStart=function(msg,session,next)
 
 	// var single_game_info=defaultDataManager.get_d_single_game_info(progress_id);
 
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 	var gamedata_sid;//=session.get('gamedata_sid');
 	var gamechannel_sid;//=session.get('gamechannel_sid');
 	var timeout_sid;
@@ -274,7 +277,7 @@ handler.PvEGameStart=function(msg,session,next)
 
 
 
-	if(!creator_id)
+	if(!game_id)
 	{
 		//
 		next(
@@ -286,7 +289,7 @@ handler.PvEGameStart=function(msg,session,next)
 		)
 		return;
 	}
-	else if(creator_id!=-1)
+	else if(game_id!=-1)
 	{
 		//
 		next(
@@ -299,8 +302,10 @@ handler.PvEGameStart=function(msg,session,next)
 		return;
 	}
 
+	game_id=uuid.v1();
 	var gameinfo={
 		game:{
+			game_id:game_id,
 			creator_id:uid,
 			game_name:'pve game',
 			gametype_id:4
@@ -318,13 +323,19 @@ handler.PvEGameStart=function(msg,session,next)
 		uid:-1,
 		name:"倭黑猩猩家",
 		group_id:-1,
-		actived_food_ids:session.get('actived_food_ids')
+		actived_food_ids:[1,2,3,4,5,6,7]
 	}
 	gameinfo.players[-2]={
 		uid:-2,
-		name:"棕熊家",
+		name:"红毛猩猩家",
 		group_id:-2,
-		actived_food_ids:session.get('actived_food_ids')
+		actived_food_ids:[1,2,3,4,5,6,7]
+	}
+	gameinfo.players[-101]={
+		uid:-101,
+		name:"棕熊家",
+		group_id:-101,
+		actived_food_ids:[2,5]
 	}
 
 	var funcs=[];
@@ -345,7 +356,8 @@ handler.PvEGameStart=function(msg,session,next)
 
 	//加入计时器
 	funcs.push((cb)=>{
-		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,uid,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
+		console.log(game_id)
+		this.app.rpc.timeout.timeoutRemote.start_time(timeout_sid,game_id,gamedata_sid,gamechannel_sid,timeout_sid,(nexttime)=>{
 			gameinfo.game.nexttime=nexttime;
 			cb();
 		})
@@ -374,7 +386,7 @@ handler.PvEGameStart=function(msg,session,next)
 		// console.log(gamedata_sid);
 		// console.log(gamechannel_sid);
 		// console.log(timeout_sid);
-		session.set('creator_id',uid);
+		session.set('game_id',game_id);
 		session.set('gamedata_sid',gamedata_sid);
 		session.set('gamechannel_sid',gamechannel_sid);
 		session.set('timeout_sid',timeout_sid);
@@ -566,14 +578,14 @@ handler.LoadGame=function(msg,session,next)
 	
 	var gameinfo;
 
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 	var gamedata_sid=session.get('gamedata_sid');
 	var gamechannel_sid=session.get('gamechannel_sid');
 
 	// console.log(creator_id);
 	// console.log(gamedata_sid);
 	// console.log(gamechannel_sid);
-	if(!creator_id)
+	if(!game_id)
 	{
 		//
 		next(
@@ -593,14 +605,14 @@ handler.LoadGame=function(msg,session,next)
 	var funcs=[];
 
 	funcs.push((cb)=>{
-		this.app.rpc.gamechannel.gamechannelRemote.EnterGameChannel(gamechannel_sid,uid,creator_id,session.frontendId,(err)=>{
+		this.app.rpc.gamechannel.gamechannelRemote.EnterGameChannel(gamechannel_sid,uid,game_id,session.frontendId,(err)=>{
 			cb(err);
 		})
 
 	});
 
 	funcs.push((cb)=>{
-		this.app.rpc.gamedata.gamedataRemote.GetUserGameInfo(gamedata_sid,creator_id,uid,(gameinfo_t)=>{
+		this.app.rpc.gamedata.gamedataRemote.GetUserGameInfo(gamedata_sid,game_id,uid,(gameinfo_t)=>{
 			user_gameinfo=gameinfo_t;
 			cb();
 		});
@@ -608,7 +620,7 @@ handler.LoadGame=function(msg,session,next)
 	});
 
 	funcs.push((cb)=>{
-		this.app.rpc.gamedata.gamedataRemote.GetGameInfo(gamedata_sid,creator_id,(gameinfo_t)=>{
+		this.app.rpc.gamedata.gamedataRemote.GetGameInfo(gamedata_sid,game_id,(gameinfo_t)=>{
 			gameinfo=gameinfo_t;
 			cb();
 		});
@@ -638,7 +650,7 @@ handler.LoadGame=function(msg,session,next)
 					data:{
 						gameinfo:user_gameinfo,
 						groupinfo:gamelib.get_population_genetic_info(gameinfo,uid),
-						weight_dic:gamelib.get_all_resultable_weight(gameinfo)
+						weight_dic:gamelib.get_all_listable_weight(gameinfo)
 					}
 				}
 			)
@@ -652,7 +664,7 @@ handler.NextTurn=function(msg,session,next)
 {
 	var uid=session.uid;
 
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 	var gamedata_sid=session.get('gamedata_sid');
 	var gamechannel_sid=session.get('gamechannel_sid');
 	var timeout_sid=session.get('timeout_sid');
@@ -660,7 +672,7 @@ handler.NextTurn=function(msg,session,next)
 	var direction=msg.direction;
 	var current_turn=msg.current_turn;
 
-	if(!creator_id)
+	if(!game_id)
 	{
 		//
 		next(
@@ -675,7 +687,7 @@ handler.NextTurn=function(msg,session,next)
 
 
 	var action_list_dic;
-	this.app.rpc.gamedata.gamedataRemote.CheckNextTurn(gamedata_sid,creator_id,uid,direction,current_turn,(all_ready)=>{
+	this.app.rpc.gamedata.gamedataRemote.CheckNextTurn(gamedata_sid,game_id,uid,direction,current_turn,(all_ready)=>{
 		next(
 			null,
 			{
@@ -690,23 +702,23 @@ handler.NextTurn=function(msg,session,next)
 
 		if(!all_ready)
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.BroadcastDirectionTurn(gamechannel_sid,creator_id,uid,()=>{});
+			this.app.rpc.gamechannel.gamechannelRemote.BroadcastDirectionTurn(gamechannel_sid,game_id,uid,()=>{});
 		}
 		else
 		{
-			// this.app.rpc.game.gameRemote.ExecuteDirection(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,()=>{});
+			// this.app.rpc.game.gameRemote.ExecuteDirection(session,game_id,gamedata_sid,gamechannel_sid,timeout_sid,()=>{});
 			// console.log('start');
-			this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,creator_id,gamechannel_sid,timeout_sid,()=>{
+			this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,gamedata_sid,game_id,gamechannel_sid,timeout_sid,()=>{
 				console.log('callback');
 			});
 
-			// this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,creator_id,(result)=>{
-			// 	this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,creator_id,result.action_list_dic,()=>{
+			// this.app.rpc.gamedata.gamedataRemote.ExecuteDirection(gamedata_sid,game_id,(result)=>{
+			// 	this.app.rpc.gamechannel.gamechannelRemote.BroadcastActions(gamechannel_sid,game_id,result.action_list_dic,()=>{
 
 			// 	});
 			// 	if(!!result.gameover)
 			// 	{
-			// 		this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
+			// 		this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,game_id,result.gameover,()=>{
 						
 			// 		});
 			// 	}
@@ -716,7 +728,7 @@ handler.NextTurn=function(msg,session,next)
 	});
 	// var funcs=[];
 	// funcs.push((cb)=>{
-	// 	this.app.rpc.gamedata.gamedataRemote.NextTurn(gamedata_sid,creator_id,uid,direction,current_turn,(action_list_dic_t)=>{
+	// 	this.app.rpc.gamedata.gamedataRemote.NextTurn(gamedata_sid,game_id,uid,direction,current_turn,(action_list_dic_t)=>{
 	// 		action_list_dic=action_list_dic_t;
 	// 	});
 	// });
@@ -733,7 +745,7 @@ handler.SubTurn=function(msg,session,next)
 {
 	var uid=session.uid;
 
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 	var gamedata_sid=session.get('gamedata_sid');
 	var gamechannel_sid=session.get('gamechannel_sid');
 
@@ -742,7 +754,7 @@ handler.SubTurn=function(msg,session,next)
 	var direction_param=msg.direction_param;
 	// var current_turn=msg.current_turn;
 
-	if(!creator_id)
+	if(!game_id)
 	{
 		//
 		next(
@@ -757,7 +769,7 @@ handler.SubTurn=function(msg,session,next)
 
 
 	var action_dic;
-	this.app.rpc.gamedata.gamedataRemote.SubTurn(gamedata_sid,creator_id,uid,role_id,direction_did,direction_param,(result)=>{
+	this.app.rpc.gamedata.gamedataRemote.SubTurn(gamedata_sid,game_id,uid,role_id,direction_did,direction_param,(result)=>{
 		next(
 			null,
 			{
@@ -769,12 +781,12 @@ handler.SubTurn=function(msg,session,next)
 		// console.log(result);
 		if(!!result)
 		{
-			this.app.rpc.gamechannel.gamechannelRemote.BroadcastSubActions(gamechannel_sid,creator_id,result,()=>{
+			this.app.rpc.gamechannel.gamechannelRemote.BroadcastSubActions(gamechannel_sid,game_id,result,()=>{
 
 			});
 			// if(!!result.gameover)
 			// {
-			// 	this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,creator_id,result.gameover,()=>{
+			// 	this.app.rpc.gamechannel.gamechannelRemote.GameOver(gamechannel_sid,game_id,result.gameover,()=>{
 					
 			// 	});
 			// }
@@ -783,7 +795,7 @@ handler.SubTurn=function(msg,session,next)
 	});
 	// var funcs=[];
 	// funcs.push((cb)=>{
-	// 	this.app.rpc.gamedata.gamedataRemote.NextTurn(gamedata_sid,creator_id,uid,direction,current_turn,(action_list_dic_t)=>{
+	// 	this.app.rpc.gamedata.gamedataRemote.NextTurn(gamedata_sid,game_id,uid,direction,current_turn,(action_list_dic_t)=>{
 	// 		action_list_dic=action_list_dic_t;
 	// 	});
 	// });
@@ -800,12 +812,12 @@ handler.LeaveGame=function(msg,session,next)
 {
 	var uid=session.uid;
 
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 	var gamedata_sid=session.get('gamedata_sid');
 	var gamechannel_sid=session.get('gamechannel_sid');
 	var timeout_sid=session.get('timeout_sid');
 
-	if(!creator_id)
+	if(!game_id)
 	{
 		//
 		next(
@@ -817,7 +829,7 @@ handler.LeaveGame=function(msg,session,next)
 		)
 		return;
 	}
-	else if(creator_id==-1)
+	else if(game_id==-1)
 	{
 		//
 		next(
@@ -830,7 +842,7 @@ handler.LeaveGame=function(msg,session,next)
 		return;
 	}
 
-	this.app.rpc.game.gameRemote.OnUserLeave(session,creator_id,gamedata_sid,gamechannel_sid,timeout_sid,uid,(err)=>{
+	this.app.rpc.game.gameRemote.OnUserLeave(session,game_id,gamedata_sid,gamechannel_sid,timeout_sid,uid,(err)=>{
 		if(!!err)
 		{
 			next(

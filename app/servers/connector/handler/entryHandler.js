@@ -157,7 +157,7 @@ handler.login = function(msg, session, next) {
 		session.set('sid', this.app.get('serverId'));
 		session.set('user_name',user.name);
 		// session.set('single_game_progress',user.single_game_progress);
-		session.set('creator_id',-1);
+		session.set('game_id',-1);
 		session.set('gamedata_sid',-1);
 		session.set('gamechannel_sid',-1);
 		// var gameServers=this.app.getServersByType('game');
@@ -219,7 +219,7 @@ handler.login = function(msg, session, next) {
 								
 
 							},
-							isingame:session.get('creator_id')!=undefined
+							isingame:session.get('game_id')!=undefined
 						}
 						
 					}
@@ -253,14 +253,14 @@ var onLeaveGame=function(app,session)
 	console.log('user:'+session.uid+' leave');
 	// console.log(session.get('test'));
 	// console.log(session.get('creator_id'));
-	var	creator_id=session.get('creator_id');
+	var	game_id=session.get('game_id');
 
-	if(creator_id!=-1)
+	if(game_id!=-1)
 	{
 		var gamedata_sid=session.get('gamedata_sid');
 		var gamechannel_sid=session.get('gamechannel_sid');
 		var timeout_sid=session.get('timeout_sid');
-		app.rpc.game.gameRemote.OnUserLeave(session, creator_id,gamedata_sid,gamechannel_sid,timeout_sid,session.uid,(err)=>{
+		app.rpc.game.gameRemote.OnUserLeave(session, game_id,gamedata_sid,gamechannel_sid,timeout_sid,session.uid,(err)=>{
 		});
 		
 	}

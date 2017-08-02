@@ -27,12 +27,12 @@ const GameOver="GameOver";
  * 
  *
  */
-handler.EnterGameChannel=function(uid,creator_id,frontendId,cb)
+handler.EnterGameChannel=function(uid,game_id,frontendId,cb)
 {
 
 	if(userChannelDic[uid]==undefined)
 	{
-		var channel = this.channelService.getChannel(creator_id, true);
+		var channel = this.channelService.getChannel(game_id, true);
 
 		channel.pushMessage(UserEnter,{
 			code:200,
@@ -41,7 +41,7 @@ handler.EnterGameChannel=function(uid,creator_id,frontendId,cb)
 			}
 		},()=>{
 			channel.add(uid, frontendId);
-			userChannelDic[uid]=creator_id;
+			userChannelDic[uid]=game_id;
 			cb();
 		});
 
@@ -60,10 +60,10 @@ handler.EnterGameChannel=function(uid,creator_id,frontendId,cb)
 
 handler.LeaveGameChannel = function(uid,callback)
 {
-	var creator_id=userChannelDic[uid];
-	if(creator_id!=undefined)
+	var game_id=userChannelDic[uid];
+	if(game_id!=undefined)
 	{
-		var channel = this.channelService.getChannel(creator_id, false);
+		var channel = this.channelService.getChannel(game_id, false);
 		var frontendId=channel.records[uid].sid;
 		channel.leave(uid, frontendId);
 		delete userChannelDic[uid];
@@ -76,7 +76,7 @@ handler.LeaveGameChannel = function(uid,callback)
 					var backendSession=backendSessions[0];
 					if(!!backendSessions[0])
 					{
-						backendSession.set('creator_id',-1);
+						backendSession.set('game_id',-1);
 						backendSession.set('gamedata_sid',-1);
 						backendSession.set('gamechannel_sid',-1);
 						backendSession.set('timeout_sid',-1);
@@ -158,9 +158,9 @@ handler.LeaveGameChannel = function(uid,callback)
 
 
 
-handler.BroadcastActions = function(creator_id,action_list_dic,nexttime,cb)
+handler.BroadcastActions = function(game_id,action_list_dic,nexttime,cb)
 {
-	var channel = this.channelService.getChannel(creator_id, false);
+	var channel = this.channelService.getChannel(game_id, false);
 
 	for(uid in action_list_dic)
 	{
@@ -181,9 +181,9 @@ handler.BroadcastActions = function(creator_id,action_list_dic,nexttime,cb)
 	
 };
 
-handler.BroadcastDirectionTurn = function(creator_id,uid,cb)
+handler.BroadcastDirectionTurn = function(game_id,uid,cb)
 {
-	var channel = this.channelService.getChannel(creator_id, false);
+	var channel = this.channelService.getChannel(game_id, false);
 
 	channel.pushMessage(UpdateDirectionTurn,{
 		code:200,
@@ -198,9 +198,9 @@ handler.BroadcastDirectionTurn = function(creator_id,uid,cb)
 	
 };
 
-handler.BroadcastSubActions = function(creator_id,action_dic,cb)
+handler.BroadcastSubActions = function(game_id,action_dic,cb)
 {
-	var channel = this.channelService.getChannel(creator_id, false);
+	var channel = this.channelService.getChannel(game_id, false);
 
 	for(uid in action_dic)
 	{
@@ -221,9 +221,9 @@ handler.BroadcastSubActions = function(creator_id,action_dic,cb)
 //玩家失败
 // handler.PlayerFail = function(uid,cb)
 // {
-// 	var creator_id=userChannelDic[uid];
-// 	var channel = this.channelService.getChannel(creator_id, false);
-// 	// console.log(creator_id);
+// 	var game_id=userChannelDic[uid];
+// 	var channel = this.channelService.getChannel(game_id, false);
+// 	// console.log(game_id);
 
 // 	//玩家离开频道
 // 	channel.leave(uid,channel.records[uid].sid);
@@ -241,12 +241,12 @@ handler.BroadcastSubActions = function(creator_id,action_dic,cb)
 // };
 
 //游戏结束
-handler.GameOver = function(creator_id,msg,callback)
+handler.GameOver = function(game_id,msg,callback)
 {
-	var channel = this.channelService.getChannel(creator_id, false);
+	var channel = this.channelService.getChannel(game_id, false);
 	// console.log(this.channelService.channels);
 	// console.log(channel);
-	// console.log(creator_id);
+	// console.log(game_id);
 	if(!channel)
 	{
 		callback();
@@ -286,7 +286,7 @@ handler.GameOver = function(creator_id,msg,callback)
 						{
 							var backendSession=backendSessions[0];
 							//删除路由
-							backendSession.set('creator_id',-1);
+							backendSession.set('game_id',-1);
 							backendSession.set('gamedata_sid',-1);
 							backendSession.set('gamechannel_sid',-1);
 							backendSession.pushAll(()=>{
