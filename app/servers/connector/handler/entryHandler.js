@@ -104,17 +104,17 @@ handler.login = function(msg, session, next) {
 			{
 				if(rows.length==0)
 				{
-					cb('account does not exist!');
+					cb('账号不存在!');
 				}
 				else
 				{
 					user=rows[0];
 					if(pwd!=user.pwd)
 					{
-						cb('the pwd is wrong!');
+						cb('密码错误!');
 					}
 					else if( !! sessionService.getByUid(user.uid)) {
-						cb('duplicate log in!')
+						cb('已登陆!')
 					}
 					else
 					{
@@ -194,7 +194,7 @@ handler.login = function(msg, session, next) {
 					null,
 					{
 						code:500,
-						data:false
+						data:err
 					}
 				)
 			});
